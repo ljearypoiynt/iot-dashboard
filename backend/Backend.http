@@ -1,0 +1,37 @@
+@Backend_HostAddress = http://localhost:5000
+
+### Register a new device
+POST {{Backend_HostAddress}}/api/devices/register
+Content-Type: application/json
+
+{
+  "deviceName": "ESP32-Test-Device",
+  "bluetoothId": "12:34:56:78:90:AB",
+  "deviceType": "ESP32"
+}
+
+### Get all devices
+GET {{Backend_HostAddress}}/api/devices
+Accept: application/json
+
+### Get device by ID (replace with actual ID)
+GET {{Backend_HostAddress}}/api/devices/YOUR_DEVICE_ID_HERE
+Accept: application/json
+
+### Update device status
+PUT {{Backend_HostAddress}}/api/devices/YOUR_DEVICE_ID_HERE/status
+Content-Type: application/json
+
+"Online"
+
+### Update device metadata
+PUT {{Backend_HostAddress}}/api/devices/YOUR_DEVICE_ID_HERE/metadata
+Content-Type: application/json
+
+{
+  "firmware": "1.0.0",
+  "location": "Office"
+}
+
+### Delete device
+DELETE {{Backend_HostAddress}}/api/devices/YOUR_DEVICE_ID_HERE

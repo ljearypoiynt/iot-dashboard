@@ -1,0 +1,46 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Backend API",
+			"type": "shell",
+			"command": "dotnet run --project backend/Backend.csproj",
+			"isBackground": true,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Start Frontend",
+			"type": "shell",
+			"command": "npm start",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"problemMatcher": {
+				"pattern": {
+					"regexp": ".",
+					"file": 1,
+					"location": 2,
+					"message": 3
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "Compiling...",
+					"endsPattern": "webpack compiled|Failed to compile"
+				}
+			},
+			"group": "build"
+		},
+		{
+			"label": "Start All",
+			"dependsOn": [
+				"Start Backend API",
+				"Start Frontend"
+			],
+			"problemMatcher": []
+		}
+	]
+}
