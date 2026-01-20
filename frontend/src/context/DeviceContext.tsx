@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { bluetoothService, ESP32Device, WiFiCredentials, DeviceInfo, DeviceProperty } from '../services/BluetoothService';
+import { bluetoothService, ESP32Device, WiFiCredentials, DeviceInfo } from '../services/BluetoothService';
 
 interface DeviceContextType {
   connectedDevice: ESP32Device | null;
