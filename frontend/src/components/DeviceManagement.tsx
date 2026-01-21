@@ -22,6 +22,13 @@ const DeviceManagement: React.FC = () => {
   const [cloudNodes, setCloudNodes] = useState<IoTDevice[]>([]);
   const [selectedCloudNode, setSelectedCloudNode] = useState<string>('');
   const [assignmentStatus, setAssignmentStatus] = useState('');
+  
+  // Test device creation state
+  const [showTestDeviceForm, setShowTestDeviceForm] = useState(false);
+  const [testDeviceType, setTestDeviceType] = useState<'CloudNode' | 'SensorNode'>('SensorNode');
+  const [testDeviceName, setTestDeviceName] = useState('');
+  const [testDeviceMAC, setTestDeviceMAC] = useState('');
+  const [testDeviceStatus, setTestDeviceStatus] = useState('');
 
   // Load all devices
   useEffect(() => {
@@ -237,6 +244,94 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
+  const generateRandomMAC = () => {
+    const hexDigits = '0123456789ABCDEF';
+    let mac = '';
+    for (let i = 0; i < 6; i++) {
+      if (i > 0) mac += ':';
+      mac += hexDigits.charAt(Math.floor(Math.random() * 16));
+      mac += hexDigits.charAt(Math.floor(Math.random() * 16));
+    }
+    return mac;
+  };
+
+  const handleCreateTestDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!testDeviceName) {
+      setTestDeviceStatus('Please enter a device name');
+      return;
+    }
+
+    setTestDeviceStatus('Creating test device...');
+    
+    try {
+      const macAddress = testDeviceMAC || generateRandomMAC();
+      const bluetoothId = `TEST-${Date.now()}`;
+      
+      const response = await apiService.registerDevice({
+        deviceName: testDeviceName,
+        bluetoothId: bluetoothId,
+        deviceType: testDeviceType,
+        macAddress: macAddress
+      });
+
+      if (response.success) {
+        setTestDeviceStatus(`✅ Test device "${testDeviceName}" created successfully!`);
+        
+        // Reset form
+        setTestDeviceName('');
+        setTestDeviceMAC('');
+        
+        // Reload devices
+        await loadDevices();
+        
+        // Hide form after 2 seconds
+        setTimeout(() => {
+          setShowTestDeviceForm(false);
+          setTestDeviceStatus('');
+        }, 2000);
+      } else {
+        setTestDeviceStatus(`❌ Failed to create test device: ${response.message}`);
+      }
+    } catch (err) {
+      setTestDeviceStatus(`❌ Failed to create test device: ${err}`);
+    }
+  };
+
+  const handleQuickCreateTestDevices = async () => {
+    setTestDeviceStatus('Creating test devices...');
+    
+    try {
+      // Create 1 cloud node
+      await apiService.registerDevice({
+        deviceName: 'Test-CloudNode-01',
+        bluetoothId: `TEST-CN-${Date.now()}`,
+        deviceType: 'CloudNode',
+        macAddress: generateRandomMAC()
+      });
+
+      // Create 2 sensor nodes
+      for (let i = 1; i <= 2; i++) {
+        await apiService.registerDevice({
+          deviceName: `Test-Sensor-0${i}`,
+          bluetoothId: `TEST-SN-${Date.now()}-${i}`,
+          deviceType: 'SensorNode',
+          macAddress: generateRandomMAC()
+        });
+      }
+
+      setTestDeviceStatus('✅ Created 1 cloud node and 2 sensor nodes!');
+      await loadDevices();
+      
+      setTimeout(() => {
+        setTestDeviceStatus('');
+      }, 3000);
+    } catch (err) {
+      setTestDeviceStatus(`❌ Failed to create test devices: ${err}`);
+    }
+  };
+
   return (
     <div className="provisioning-container">
       <h1>ESP32 Config</h1>
@@ -257,7 +352,71 @@ const DeviceManagement: React.FC = () => {
       {/* Device List - Show paired devices first */}
       <div className="device-list-section">
         <h2>Paired Devices</h2>
-        <button onClick={loadDevices} className="btn btn-secondary">Refresh</button>
+        <div className="section-actions">
+          <button onClick={loadDevices} className="btn btn-secondary">Refresh</button>
+          <button onClick={() => setShowTestDeviceForm(!showTestDeviceForm)} className="btn btn-info">
+            {showTestDeviceForm ? 'Hide Test Device Form' : '➕ Create Test Device'}
+          </button>
+          <button onClick={handleQuickCreateTestDevices} className="btn btn-success">
+            🚀 Quick Create Test Devices
+          </button>
+        </div>
+
+        {/* Test Device Creation Form */}
+        {showTestDeviceForm && (
+          <div className="test-device-form">
+            <h3>Create Test Device</h3>
+            <p>Create mock devices for testing without Bluetooth provisioning</p>
+            
+            <form onSubmit={handleCreateTestDevice}>
+              <div className="form-group">
+                <label htmlFor="testDeviceType">Device Type:</label>
+                <select
+                  id="testDeviceType"
+                  value={testDeviceType}
+                  onChange={(e) => setTestDeviceType(e.target.value as 'CloudNode' | 'SensorNode')}
+                >
+                  <option value="SensorNode">Sensor Node</option>
+                  <option value="CloudNode">Cloud Node</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="testDeviceName">Device Name: *</label>
+                <input
+                  id="testDeviceName"
+                  type="text"
+                  placeholder={testDeviceType === 'CloudNode' ? 'e.g., Test-CloudNode-01' : 'e.g., Test-Sensor-01'}
+                  value={testDeviceName}
+                  onChange={(e) => setTestDeviceName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="testDeviceMAC">MAC Address (optional):</label>
+                <input
+                  id="testDeviceMAC"
+                  type="text"
+                  placeholder="Leave blank to auto-generate (e.g., AA:BB:CC:DD:EE:FF)"
+                  value={testDeviceMAC}
+                  onChange={(e) => setTestDeviceMAC(e.target.value.toUpperCase())}
+                />
+                <small>Format: XX:XX:XX:XX:XX:XX or leave blank for random MAC</small>
+              </div>
+
+              <button type="submit" className="btn btn-primary">
+                Create Test Device
+              </button>
+            </form>
+
+            {testDeviceStatus && (
+              <div className="status-message">
+                {testDeviceStatus}
+              </div>
+            )}
+          </div>
+        )}
         
         <div className="device-list">
           {allDevices.length === 0 ? (

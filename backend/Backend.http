@@ -35,3 +35,30 @@ Content-Type: application/json
 
 ### Delete device
 DELETE {{Backend_HostAddress}}/api/devices/YOUR_DEVICE_ID_HERE
+
+### Save sensor data
+POST {{Backend_HostAddress}}/api/devices/sensor-data
+Content-Type: application/json
+
+{
+  "deviceId": "YOUR_DEVICE_ID_HERE",
+  "data": {
+    "temperature": 23.5,
+    "humidity": 65.2,
+    "pressure": 1013.25,
+    "distance": 150.5,
+    "battery": 3.7
+  }
+}
+
+### Get all sensor data
+GET {{Backend_HostAddress}}/api/devices/sensor-data
+Accept: application/json
+
+### Get sensor data for specific device (with optional limit)
+GET {{Backend_HostAddress}}/api/devices/sensor-data/device/YOUR_DEVICE_ID_HERE?limit=100
+Accept: application/json
+
+### Get sensor data by time range
+GET {{Backend_HostAddress}}/api/devices/sensor-data/range?startTime=2026-01-20T00:00:00Z&endTime=2026-01-21T23:59:59Z
+Accept: application/json

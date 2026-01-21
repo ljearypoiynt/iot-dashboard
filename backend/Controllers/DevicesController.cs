@@ -166,4 +166,73 @@ public class DevicesController : ControllerBase
         }
         return Ok(new { message = "Device deleted successfully" });
     }
+
+    /// <summary>
+    /// Save sensor data from a device
+    /// </summary>
+    [HttpPost("sensor-data")]
+    public async Task<ActionResult<SensorDataResponse>> SaveSensorData([FromBody] SensorDataRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Receiving sensor data from device: {DeviceId}", request.DeviceId);
+            
+            var sensorData = await _deviceService.SaveSensorDataAsync(request);
+            
+            return Ok(new SensorDataResponse
+            {
+                Success = true,
+                Message = "Sensor data saved successfully",
+                Data = sensorData
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save sensor data");
+            return BadRequest(new SensorDataResponse
+            {
+                Success = false,
+                Message = $"Failed to save sensor data: {ex.Message}"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get all sensor data
+    /// </summary>
+    [HttpGet("sensor-data")]
+    public async Task<ActionResult<IEnumerable<SensorData>>> GetAllSensorData()
+    {
+        var data = await _deviceService.GetAllSensorDataAsync();
+        return Ok(data);
+    }
+
+    /// <summary>
+    /// Get sensor data for a specific device
+    /// </summary>
+    [HttpGet("sensor-data/device/{deviceId}")]
+    public async Task<ActionResult<IEnumerable<SensorData>>> GetSensorDataByDevice(
+        string deviceId, 
+        [FromQuery] int? limit = null)
+    {
+        var data = await _deviceService.GetSensorDataByDeviceIdAsync(deviceId, limit);
+        return Ok(data);
+    }
+
+    /// <summary>
+    /// Get sensor data within a time range
+    /// </summary>
+    [HttpGet("sensor-data/range")]
+    public async Task<ActionResult<IEnumerable<SensorData>>> GetSensorDataByTimeRange(
+        [FromQuery] DateTime startTime, 
+        [FromQuery] DateTime endTime)
+    {
+        if (startTime >= endTime)
+        {
+            return BadRequest(new { message = "Start time must be before end time" });
+        }
+
+        var data = await _deviceService.GetSensorDataByTimeRangeAsync(startTime, endTime);
+        return Ok(data);
+    }
 }

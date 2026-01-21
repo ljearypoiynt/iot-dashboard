@@ -20,11 +20,16 @@ public interface IDeviceService
     Task<AssignSensorResult> AssignSensorToCloudNodeAsync(string sensorId, string cloudNodeId);
     Task<IEnumerable<IoTDevice>> GetDevicesByTypeAsync(string deviceType);
     Task<IEnumerable<IoTDevice>> GetSensorsForCloudNodeAsync(string cloudNodeId);
+    Task<SensorData> SaveSensorDataAsync(SensorDataRequest request);
+    Task<IEnumerable<SensorData>> GetAllSensorDataAsync();
+    Task<IEnumerable<SensorData>> GetSensorDataByDeviceIdAsync(string deviceId, int? limit = null);
+    Task<IEnumerable<SensorData>> GetSensorDataByTimeRangeAsync(DateTime startTime, DateTime endTime);
 }
 
 public class DeviceService : IDeviceService
 {
     private readonly List<IoTDevice> _devices = new();
+    private readonly List<SensorData> _sensorData = new();
 
     public Task<IEnumerable<IoTDevice>> GetAllDevicesAsync()
     {
@@ -149,5 +154,58 @@ public class DeviceService : IDeviceService
     {
         var sensors = _devices.Where(d => d.CloudNodeId == cloudNodeId);
         return Task.FromResult<IEnumerable<IoTDevice>>(sensors);
+    }
+
+    public Task<SensorData> SaveSensorDataAsync(SensorDataRequest request)
+    {
+        var device = _devices.FirstOrDefault(d => d.Id == request.DeviceId);
+        
+        var sensorData = new SensorData
+        {
+            DeviceId = request.DeviceId,
+            DeviceName = device?.Name ?? "Unknown Device",
+            ReceivedAt = DateTime.UtcNow,
+            Data = request.Data
+        };
+
+        _sensorData.Add(sensorData);
+
+        // Update device last seen
+        if (device != null)
+        {
+            device.LastSeen = DateTime.UtcNow;
+            device.Status = DeviceStatus.Online;
+        }
+
+        return Task.FromResult(sensorData);
+    }
+
+    public Task<IEnumerable<SensorData>> GetAllSensorDataAsync()
+    {
+        var orderedData = _sensorData.OrderByDescending(d => d.ReceivedAt);
+        return Task.FromResult<IEnumerable<SensorData>>(orderedData);
+    }
+
+    public Task<IEnumerable<SensorData>> GetSensorDataByDeviceIdAsync(string deviceId, int? limit = null)
+    {
+        IEnumerable<SensorData> query = _sensorData
+            .Where(d => d.DeviceId == deviceId)
+            .OrderByDescending(d => d.ReceivedAt);
+
+        if (limit.HasValue)
+        {
+            query = query.Take(limit.Value);
+        }
+
+        return Task.FromResult(query);
+    }
+
+    public Task<IEnumerable<SensorData>> GetSensorDataByTimeRangeAsync(DateTime startTime, DateTime endTime)
+    {
+        var data = _sensorData
+            .Where(d => d.ReceivedAt >= startTime && d.ReceivedAt <= endTime)
+            .OrderByDescending(d => d.ReceivedAt);
+
+        return Task.FromResult<IEnumerable<SensorData>>(data);
     }
 }

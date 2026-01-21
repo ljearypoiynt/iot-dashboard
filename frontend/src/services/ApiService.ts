@@ -38,6 +38,25 @@ export interface AssignSensorResponse {
   cloudNodeMacAddress: string;
 }
 
+export interface SensorData {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  receivedAt: string;
+  data: Record<string, any>;
+}
+
+export interface SensorDataRequest {
+  deviceId: string;
+  data: Record<string, any>;
+}
+
+export interface SensorDataResponse {
+  success: boolean;
+  message: string;
+  data?: SensorData;
+}
+
 class ApiService {
   /**
    * Register a device with the backend
@@ -219,6 +238,92 @@ class ApiService {
       return await response.json();
     } catch (error) {
       console.error('Failed to get sensors for cloud node:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all sensor data
+   */
+  async getAllSensorData(): Promise<SensorData[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/devices/sensor-data`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to get sensor data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get sensor data for a specific device
+   */
+  async getSensorDataByDevice(deviceId: string, limit?: number): Promise<SensorData[]> {
+    try {
+      const url = limit 
+        ? `${API_BASE_URL}/devices/sensor-data/device/${deviceId}?limit=${limit}`
+        : `${API_BASE_URL}/devices/sensor-data/device/${deviceId}`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to get sensor data by device:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get sensor data within a time range
+   */
+  async getSensorDataByTimeRange(startTime: Date, endTime: Date): Promise<SensorData[]> {
+    try {
+      const start = startTime.toISOString();
+      const end = endTime.toISOString();
+      const response = await fetch(
+        `${API_BASE_URL}/devices/sensor-data/range?startTime=${start}&endTime=${end}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to get sensor data by time range:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save sensor data
+   */
+  async saveSensorData(request: SensorDataRequest): Promise<SensorDataResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/devices/sensor-data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to save sensor data:', error);
       throw error;
     }
   }

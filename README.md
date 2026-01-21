@@ -12,15 +12,20 @@ A full-stack application for provisioning and managing ESP32 IoT devices via Blu
 - **Real-time Status**: Monitor device connection status and metadata
 - **MAC Address Tracking**: Automatically capture and store device MAC addresses
 - **Automated Configuration**: Sensor nodes automatically receive cloud node MAC addresses
+- **Interactive Dashboard**: Visualize sensor data with customizable graph widgets
+- **Multiple Chart Types**: Line, area, and bar charts for data visualization
+- **Real-time Data Updates**: Dashboard auto-refreshes every 10 seconds
 
 ## Technology Stack
 
 ### Frontend
 - **React** with TypeScript
 - **Web Bluetooth API** for device communication
+- **Recharts** for data visualization
 - Modern CSS for responsive UI
 - Context API for state management
 - Tab-based interface for device types
+- Interactive dashboard with graph widgets
 
 ### Backend
 - **.NET Core 10.0** Web API
@@ -131,6 +136,63 @@ iot-dashboard/
 3. Scroll to "Assign Sensor to Cloud Node" section
 4. Select a sensor node and a cloud node
 5. Click "Assign Sensor to Cloud Node"
+
+### Using the Dashboard
+
+1. Click the **📊 Dashboard** tab in the navigation
+2. Click **"+ Add Graph Widget"** to create a new visualization
+3. Fill in the widget configuration:
+   - **Widget Title**: Name your graph (e.g., "Temperature Monitor")
+   - **Select Device**: Choose the sensor device to visualize
+   - **Data Field**: Select which sensor value to display (e.g., temperature, humidity)
+   - **Chart Type**: Choose Line, Area, or Bar chart
+   - **Color**: Pick a color for the graph
+   - **Data Points Limit**: How many recent readings to display (5-100)
+4. Click **"Add Widget"** to create the visualization
+5. The dashboard will auto-refresh every 10 seconds with new data
+6. You can edit (✏️) or remove (❌) widgets at any time
+
+### Testing with the Sensor Simulator
+
+For testing the dashboard without physical devices:
+
+1. **Ensure both backend and frontend are running:**
+   - Backend: `http://localhost:5071`
+   - Frontend: `http://localhost:3000`
+2. Open the sensor simulator: `http://localhost:3000/sensor-simulator.html` in your browser
+   - ⚠️ **Important**: Must access through the React dev server (localhost:3000), not by opening the file directly
+3. Enter a device ID from your test devices (click "Refresh" in Device Provisioning to see device IDs)
+4. Adjust sensor values (temperature, humidity, etc.)
+5. Click **"Send Data"** to manually send readings
+6. Or use **"Start Auto-Send"** to automatically send data every 5 seconds with random variations
+7. Watch your dashboard update in real-time!
+
+### Creating Test Devices
+
+For quick testing without physical ESP32 devices or Bluetooth:
+
+**Quick Create Method:**
+1. Go to the **📱 Device Provisioning** page
+2. In the "Paired Devices" section, click **"🚀 Quick Create Test Devices"**
+3. This automatically creates:
+   - 1 test cloud node with a random MAC address
+   - 2 test sensor nodes with random MAC addresses
+4. These devices are immediately available for assignment and dashboard testing
+
+**Manual Create Method:**
+1. Click **"➕ Create Test Device"** button
+2. Select device type (Sensor Node or Cloud Node)
+3. Enter a device name (e.g., "Test-Sensor-01" or "Test-CloudNode-01")
+4. Optionally enter a MAC address (or leave blank for auto-generation)
+5. Click **"Create Test Device"**
+6. The device will appear in the device list immediately
+
+**Using Test Devices:**
+- Test devices work exactly like real devices in the API
+- You can assign test sensors to test cloud nodes
+- Use the Sensor Simulator to send data from test devices
+- Create graphs and visualizations on the dashboard
+- Test devices have status "Offline" by default until they send data
 6. The sensor will automatically receive the cloud node's MAC address
 7. Sensor data will now be sent to the assigned cloud node via ESP-NOW
 
@@ -161,6 +223,13 @@ Your ESP32 firmware should implement the following Bluetooth GATT services:
 - `GET /api/devices/cloud-nodes` - Get all cloud nodes
 - `GET /api/devices/cloud-nodes/{id}/sensors` - Get sensors assigned to a cloud node
 - `POST /api/devices/assign-sensor` - Assign a sensor to a cloud node
+
+### Sensor Data
+
+- `POST /api/devices/sensor-data` - Save sensor data from a device
+- `GET /api/devices/sensor-data` - Get all sensor data (ordered by time, newest first)
+- `GET /api/devices/sensor-data/device/{deviceId}?limit={n}` - Get sensor data for a specific device (optional limit)
+- `GET /api/devices/sensor-data/range?startTime={start}&endTime={end}` - Get sensor data within a time range
 
 ## Device Types
 
@@ -197,8 +266,8 @@ The Web Bluetooth API is supported in:
 
 ## Future Enhancements
 
-- [ ] Device dashboard with real-time metrics
-- [ ] Sensor data visualization
+- [x] Device dashboard with real-time metrics
+- [x] Sensor data visualization
 - [ ] Device grouping and management
 - [ ] Alert and notification system
 - [ ] Persistent database integration (PostgreSQL, MongoDB)
@@ -208,6 +277,9 @@ The Web Bluetooth API is supported in:
 - [ ] Batch sensor assignment
 - [ ] Cloud node health monitoring
 - [ ] Sensor battery status alerts
+- [ ] Export dashboard data to CSV/Excel
+- [ ] Custom date range selection for historical data
+- [ ] Dashboard layout customization and save/load
 
 ## Troubleshooting
 

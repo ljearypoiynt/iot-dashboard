@@ -339,3 +339,56 @@
   text-align: center;
   padding: 20px;
 }
+
+/* Test Device Form */
+.test-device-form {
+  background: #1f2937;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  border: 2px solid #3b82f6;
+}
+
+.test-device-form h3 {
+  color: #60a5fa;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.test-device-form p {
+  color: #9ca3af;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.test-device-form small {
+  display: block;
+  color: #9ca3af;
+  margin-top: 5px;
+  font-size: 0.85rem;
+}
+
+.section-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: white !important;
+}
+
+.btn-info:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
