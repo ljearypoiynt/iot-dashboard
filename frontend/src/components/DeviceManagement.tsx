@@ -4,11 +4,8 @@ import { bluetoothService, DeviceProperty, DeviceInfo } from '../services/Blueto
 import { apiService, IoTDevice } from '../services/ApiService';
 import './DeviceProvisioning.css';
 
-type DeviceTab = 'sensor' | 'cloud';
-
 const DeviceManagement: React.FC = () => {
   const { connectedDevice, isScanning, error, connectToDevice, provisionWiFi, disconnect, clearError, getDeviceInfo, updateDeviceProperties } = useDevice();
-  const [activeTab, setActiveTab] = useState<DeviceTab>('sensor');
   const [ssid, setSsid] = useState('');
   const [password, setPassword] = useState('');
   const [provisioningStatus, setProvisioningStatus] = useState('');
@@ -23,7 +20,6 @@ const DeviceManagement: React.FC = () => {
   // Device management state
   const [allDevices, setAllDevices] = useState<IoTDevice[]>([]);
   const [cloudNodes, setCloudNodes] = useState<IoTDevice[]>([]);
-  const [selectedSensor, setSelectedSensor] = useState<string>('');
   const [selectedCloudNode, setSelectedCloudNode] = useState<string>('');
   const [assignmentStatus, setAssignmentStatus] = useState('');
 
@@ -103,9 +99,9 @@ const DeviceManagement: React.FC = () => {
           const status = await bluetoothService.getProvisioningStatus();
           setProvisioningStatus(`Device status: ${status}`);
           
-          // Register device with backend
+          // Register device with backend using the device type from deviceInfo
           if (connectedDevice && deviceInfo) {
-            const deviceType = activeTab === 'cloud' ? 'CloudNode' : 'SensorNode';
+            const deviceType = deviceInfo.deviceType; // Use device's actual type
             await apiService.registerDevice({
               deviceName: connectedDevice.name,
               bluetoothId: connectedDevice.id,
@@ -177,49 +173,73 @@ const DeviceManagement: React.FC = () => {
 
   const handleAssignSensor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSensor || !selectedCloudNode) {
+    
+    // Use the connected device as the sensor
+    if (!connectedDevice || !deviceInfo) {
+      setAssignmentStatus('No sensor device connected');
+      return;
+    }
+    
+    if (!selectedCloudNode) {
+      setAssignmentStatus('Please select a cloud node');
       return;
     }
 
     setAssignmentStatus('Assigning sensor to cloud node...');
     
     try {
-      const response = await apiService.assignSensorToCloudNode({
-        sensorId: selectedSensor,
+      // First, register the device if not already registered
+      const registeredDevices = await apiService.getDevices();
+      let sensorDeviceId = registeredDevices.find(d => d.macAddress === deviceInfo.macAddress)?.id;
+      
+      if (!sensorDeviceId) {
+        const response = await apiService.registerDevice({
+          deviceName: connectedDevice.name,
+          bluetoothId: connectedDevice.id,
+          deviceType: 'SensorNode',
+          macAddress: deviceInfo.macAddress
+        });
+        
+        if (response.device) {
+          sensorDeviceId = response.device.id;
+        } else {
+          throw new Error('Failed to register device');
+        }
+      }
+      
+      if (!sensorDeviceId) {
+        throw new Error('Could not determine sensor device ID');
+      }
+      
+      const assignResponse = await apiService.assignSensorToCloudNode({
+        sensorId: sensorDeviceId,
         cloudNodeId: selectedCloudNode
       });
       
-      setAssignmentStatus(`Success! Cloud Node MAC: ${response.cloudNodeMacAddress}. Now update the sensor via Bluetooth with this MAC address.`);
+      setAssignmentStatus(`Success! Cloud Node MAC: ${assignResponse.cloudNodeMacAddress}. Updating sensor...`);
       
-      // Update the sensor device with cloud node MAC via Bluetooth if currently connected
-      if (connectedDevice && connectedDevice.id === selectedSensor) {
-        try {
-          // Update properties to include cloudNodeMAC
-          const updatedProps = {
-            ...propertyValues,
-            cloudNodeMAC: response.cloudNodeMacAddress
-          };
-          await updateDeviceProperties(updatedProps);
-          setAssignmentStatus(`Sensor updated successfully with Cloud Node MAC: ${response.cloudNodeMacAddress}`);
-        } catch (err) {
-          setAssignmentStatus(`Assignment succeeded, but failed to update sensor via Bluetooth. Please manually update the sensor with MAC: ${response.cloudNodeMacAddress}`);
-        }
+      // Update the sensor device with cloud node MAC via Bluetooth
+      try {
+        const updatedProps = {
+          ...propertyValues,
+          cloudNodeMAC: assignResponse.cloudNodeMacAddress
+        };
+        await updateDeviceProperties(updatedProps);
+        setAssignmentStatus(`Sensor successfully assigned and configured with Cloud Node MAC: ${assignResponse.cloudNodeMacAddress}`);
+      } catch (err) {
+        setAssignmentStatus(`Assignment succeeded, but failed to update sensor via Bluetooth. Please manually update the sensor with MAC: ${assignResponse.cloudNodeMacAddress}`);
       }
       
       // Reload devices
       await loadDevices();
     } catch (err) {
-      setAssignmentStatus('Failed to assign sensor to cloud node');
+      setAssignmentStatus(`Failed to assign sensor to cloud node: ${err}`);
     }
-  };
-
-  const getSensorNodes = () => {
-    return allDevices.filter(d => d.deviceType === 'SensorNode');
   };
 
   return (
     <div className="provisioning-container">
-      <h1>IoT Device Management</h1>
+      <h1>ESP32 Config</h1>
       
       {!bluetoothService.isBluetoothAvailable() && (
         <div className="alert alert-error">
@@ -234,229 +254,14 @@ const DeviceManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Tab Selection */}
-      <div className="tabs">
-        <button 
-          className={`tab ${activeTab === 'sensor' ? 'active' : ''}`}
-          onClick={() => setActiveTab('sensor')}
-        >
-          Sensor Node
-        </button>
-        <button 
-          className={`tab ${activeTab === 'cloud' ? 'active' : ''}`}
-          onClick={() => setActiveTab('cloud')}
-        >
-          Cloud Node
-        </button>
-      </div>
-
-      <div className="device-section">
-        <h2>
-          {activeTab === 'sensor' ? 'Sensor Node' : 'Cloud Node'} Connection
-        </h2>
-        
-        <p>
-          {activeTab === 'sensor' 
-            ? 'Connect to a sensor node to configure it and assign it to a cloud node.'
-            : 'Connect to a cloud node to configure its WiFi settings. The cloud node will receive data from assigned sensors.'}
-        </p>
-        
-        {!connectedDevice ? (
-          <div>
-            <button 
-              onClick={handleScanAndConnect}
-              disabled={isScanning || !bluetoothService.isBluetoothAvailable()}
-              className="btn btn-primary"
-            >
-              {isScanning ? 'Scanning...' : `Scan for ${activeTab === 'sensor' ? 'Sensor' : 'Cloud'} Nodes`}
-            </button>
-          </div>
-        ) : (
-          <div className="connected-device">
-            <div className="device-info">
-              <span className="status-indicator connected"></span>
-              <div>
-                <strong>{connectedDevice.name}</strong>
-                <p className="device-id">ID: {connectedDevice.id}</p>
-                {deviceInfo && (
-                  <>
-                    <p className="device-mac">MAC: {deviceInfo.macAddress}</p>
-                    <p className="device-type">Type: {deviceInfo.deviceType}</p>
-                  </>
-                )}
-              </div>
-            </div>
-            <button onClick={handleDisconnect} className="btn btn-secondary">
-              Disconnect
-            </button>
-          </div>
-        )}
-      </div>
-
-      {connectedDevice && deviceInfo && deviceProperties.length > 0 && (
-        <div className="properties-section">
-          <h2>Device Properties</h2>
-          {isLoadingInfo ? (
-            <div className="loading-message">Loading device properties...</div>
-          ) : (
-            <form onSubmit={handleUpdateProperties}>
-              {deviceProperties.map((prop) => (
-                <div key={prop.name} className="form-group">
-                  <label htmlFor={prop.name}>
-                    {prop.label}
-                    {prop.unit && <span className="unit"> ({prop.unit})</span>}:
-                  </label>
-                  {prop.type === 'number' ? (
-                    <input
-                      id={prop.name}
-                      type="number"
-                      step="any"
-                      value={propertyValues[prop.name] || ''}
-                      onChange={(e) => handlePropertyChange(prop.name, parseFloat(e.target.value))}
-                      required
-                    />
-                  ) : (
-                    <input
-                      id={prop.name}
-                      type="text"
-                      value={propertyValues[prop.name] || ''}
-                      onChange={(e) => handlePropertyChange(prop.name, e.target.value)}
-                      required
-                    />
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="submit"
-                disabled={isUpdatingProperties}
-                className="btn btn-primary"
-              >
-                {isUpdatingProperties ? 'Updating...' : 'Update Properties'}
-              </button>
-            </form>
-          )}
-
-          {propertyUpdateStatus && (
-            <div className="status-message">
-              {propertyUpdateStatus}
-            </div>
-          )}
-        </div>
-      )}
-
-      {connectedDevice && (
-        <div className="provisioning-section">
-          <h2>WiFi Provisioning</h2>
-          <form onSubmit={handleProvision}>
-            <div className="form-group">
-              <label htmlFor="ssid">WiFi SSID:</label>
-              <input
-                id="ssid"
-                type="text"
-                value={ssid}
-                onChange={(e) => setSsid(e.target.value)}
-                placeholder="Enter WiFi network name"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">WiFi Password:</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter WiFi password"
-                required
-              />
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={isProvisioning || !ssid || !password}
-              className="btn btn-primary"
-            >
-              {isProvisioning ? 'Provisioning...' : 'Provision Device'}
-            </button>
-          </form>
-
-          {provisioningStatus && (
-            <div className="status-message">
-              {provisioningStatus}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Sensor Assignment Section - Only show for sensor tab */}
-      {activeTab === 'sensor' && (
-        <div className="assignment-section">
-          <h2>Assign Sensor to Cloud Node</h2>
-          <p>Select a sensor and cloud node to create the assignment. This will configure the sensor to send data to the selected cloud node.</p>
-          
-          <form onSubmit={handleAssignSensor}>
-            <div className="form-group">
-              <label htmlFor="sensor">Sensor Node:</label>
-              <select
-                id="sensor"
-                value={selectedSensor}
-                onChange={(e) => setSelectedSensor(e.target.value)}
-                required
-              >
-                <option value="">Select a sensor...</option>
-                {getSensorNodes().map(device => (
-                  <option key={device.id} value={device.id}>
-                    {device.name} - {device.macAddress || 'No MAC'}
-                    {device.cloudNodeId && ' (Already assigned)'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="cloudNode">Cloud Node:</label>
-              <select
-                id="cloudNode"
-                value={selectedCloudNode}
-                onChange={(e) => setSelectedCloudNode(e.target.value)}
-                required
-              >
-                <option value="">Select a cloud node...</option>
-                {cloudNodes.map(device => (
-                  <option key={device.id} value={device.id}>
-                    {device.name} - {device.macAddress || 'No MAC'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              disabled={!selectedSensor || !selectedCloudNode}
-              className="btn btn-primary"
-            >
-              Assign Sensor to Cloud Node
-            </button>
-          </form>
-
-          {assignmentStatus && (
-            <div className="status-message">
-              {assignmentStatus}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Device List */}
+      {/* Device List - Show paired devices first */}
       <div className="device-list-section">
-        <h2>Registered Devices</h2>
+        <h2>Paired Devices</h2>
         <button onClick={loadDevices} className="btn btn-secondary">Refresh</button>
         
         <div className="device-list">
           {allDevices.length === 0 ? (
-            <p>No devices registered yet.</p>
+            <p>No devices paired yet.</p>
           ) : (
             <table>
               <thead>
@@ -490,27 +295,188 @@ const DeviceManagement: React.FC = () => {
         </div>
       </div>
 
-      <div className="info-section">
-        <h3>Instructions</h3>
-        {activeTab === 'sensor' ? (
-          <ol>
-            <li>Power on your sensor node in provisioning mode</li>
-            <li>Click "Scan for Sensor Nodes" to discover devices</li>
-            <li>Configure sensor properties (tank capacity, distances, refresh rate)</li>
-            <li>Enter WiFi credentials and provision the device</li>
-            <li>After provisioning, assign the sensor to a cloud node below</li>
-            <li>The sensor will automatically receive the cloud node's MAC address</li>
-          </ol>
+      {/* Bluetooth Scanner Section */}
+      <div className="device-section">
+        <div className="scanner-header">
+          <h2>🔷 Bluetooth Scanner</h2>
+          <p>Scan for nearby ESP32 devices to configure</p>
+        </div>
+        
+        {!connectedDevice ? (
+          <div className="scanner-content">
+            <button 
+              onClick={handleScanAndConnect}
+              disabled={isScanning || !bluetoothService.isBluetoothAvailable()}
+              className="btn btn-primary scan-button"
+            >
+              🔷 {isScanning ? 'Scanning...' : 'Scan for Devices'}
+            </button>
+            {!isScanning && (
+              <p className="no-devices-message">No devices found. Tap scan to search for nearby ESP32 devices.</p>
+            )}
+          </div>
         ) : (
-          <ol>
-            <li>Power on your cloud node in provisioning mode</li>
-            <li>Click "Scan for Cloud Nodes" to discover devices</li>
-            <li>Enter WiFi credentials and provision the device</li>
-            <li>The cloud node's MAC address will be stored for sensor assignments</li>
-            <li>Switch to Sensor Node tab to assign sensors to this cloud node</li>
-          </ol>
+          <div className="connected-device">
+            <div className="device-info">
+              <span className="status-indicator connected"></span>
+              <div>
+                <strong>{connectedDevice.name}</strong>
+                <p className="device-id">ID: {connectedDevice.id}</p>
+                {deviceInfo && (
+                  <>
+                    <p className="device-mac">MAC: {deviceInfo.macAddress}</p>
+                    <p className="device-type">Type: {deviceInfo.deviceType}</p>
+                  </>
+                )}
+              </div>
+            </div>
+            <button onClick={handleDisconnect} className="btn btn-secondary">
+              Disconnect
+            </button>
+          </div>
         )}
       </div>
+
+      {/* Show different content based on device type */}
+      {connectedDevice && deviceInfo && deviceInfo.deviceType === 'CloudNode' && (
+        <div className="provisioning-section">
+          <h2>WiFi Configuration</h2>
+          <p>Configure WiFi settings for the Cloud Node</p>
+          <form onSubmit={handleProvision}>
+            <div className="form-group">
+              <label htmlFor="ssid">WiFi SSID:</label>
+              <input
+                id="ssid"
+                type="text"
+                value={ssid}
+                onChange={(e) => setSsid(e.target.value)}
+                placeholder="Enter WiFi network name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">WiFi Password:</label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter WiFi password"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={isProvisioning || !ssid || !password}
+              className="btn btn-primary"
+            >
+              {isProvisioning ? 'Provisioning...' : 'Set WiFi Settings'}
+            </button>
+          </form>
+
+          {provisioningStatus && (
+            <div className="status-message">
+              {provisioningStatus}
+            </div>
+          )}
+        </div>
+      )}
+
+      {connectedDevice && deviceInfo && deviceInfo.deviceType === 'SensorNode' && (
+        <>
+          <div className="properties-section">
+            <h2>Sensor Properties</h2>
+            <p>Configure sensor-specific properties</p>
+            {isLoadingInfo ? (
+              <div className="loading-message">Loading device properties...</div>
+            ) : (
+              <form onSubmit={handleUpdateProperties}>
+                {deviceProperties.map((prop) => (
+                  <div key={prop.name} className="form-group">
+                    <label htmlFor={prop.name}>
+                      {prop.label}
+                      {prop.unit && <span className="unit"> ({prop.unit})</span>}:
+                    </label>
+                    {prop.type === 'number' ? (
+                      <input
+                        id={prop.name}
+                        type="number"
+                        step="any"
+                        value={propertyValues[prop.name] || ''}
+                        onChange={(e) => handlePropertyChange(prop.name, parseFloat(e.target.value))}
+                        required
+                      />
+                    ) : (
+                      <input
+                        id={prop.name}
+                        type="text"
+                        value={propertyValues[prop.name] || ''}
+                        onChange={(e) => handlePropertyChange(prop.name, e.target.value)}
+                        required
+                      />
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  type="submit"
+                  disabled={isUpdatingProperties}
+                  className="btn btn-primary"
+                >
+                  {isUpdatingProperties ? 'Updating...' : 'Update Properties'}
+                </button>
+              </form>
+            )}
+
+            {propertyUpdateStatus && (
+              <div className="status-message">
+                {propertyUpdateStatus}
+              </div>
+            )}
+          </div>
+
+          <div className="assignment-section">
+            <h2>Assign to Cloud Node</h2>
+            <p>Select a cloud node to receive data from this sensor</p>
+            
+            <form onSubmit={handleAssignSensor}>
+              <div className="form-group">
+                <label htmlFor="cloudNode">Cloud Node:</label>
+                <select
+                  id="cloudNode"
+                  value={selectedCloudNode}
+                  onChange={(e) => setSelectedCloudNode(e.target.value)}
+                  required
+                >
+                  <option value="">Select a cloud node...</option>
+                  {cloudNodes.map(device => (
+                    <option key={device.id} value={device.id}>
+                      {device.name} - {device.macAddress || 'No MAC'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!selectedCloudNode}
+                className="btn btn-primary"
+              >
+                Assign to Cloud Node
+              </button>
+            </form>
+
+            {assignmentStatus && (
+              <div className="status-message">
+                {assignmentStatus}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
     </div>
   );
 };
