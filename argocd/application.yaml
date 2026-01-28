@@ -9,8 +9,12 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/YOUR_USERNAME/iot-dashboard.git  # Update this with your Git repo URL
-    targetRevision: main  # or master, depending on your default branch
+    # Option 1: Use your GitHub repo (update YOUR_USERNAME)
+    repoURL: https://github.com/ljearypoiynt/iot-dashboard.git
+    
+    # Option 2: For local development without Git, use a local path (temporary)
+    #repoURL: https://github.com/ljearypoiynt/iot-dashboard  # Local file path for testing
+    targetRevision: HEAD
     path: k8s
     
   destination:

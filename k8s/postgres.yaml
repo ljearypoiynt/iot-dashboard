@@ -85,6 +85,8 @@ spec:
             - pg_isready
             - -U
             - iotuser
+            - -d
+            - iotdashboard
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
@@ -93,6 +95,8 @@ spec:
             - pg_isready
             - -U
             - iotuser
+            - -d
+            - iotdashboard
           initialDelaySeconds: 5
           periodSeconds: 5
       volumes:
