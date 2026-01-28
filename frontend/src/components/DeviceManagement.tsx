@@ -52,8 +52,15 @@ const DeviceManagement: React.FC = () => {
     const fetchDeviceInfo = async () => {
       if (connectedDevice && !deviceInfo) {
         setIsLoadingInfo(true);
+        setPropertyUpdateStatus('Connecting to device...');
+        
         try {
+          // Wait for Bluetooth connection to stabilize
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          setPropertyUpdateStatus('Reading device information...');
           const info = await getDeviceInfo();
+          
           if (info) {
             setDeviceInfo(info);
             const properties = bluetoothService.parseDeviceProperties(info);
@@ -65,9 +72,12 @@ const DeviceManagement: React.FC = () => {
               initialValues[prop.name] = prop.value;
             });
             setPropertyValues(initialValues);
+            setPropertyUpdateStatus('Device ready for configuration');
           }
         } catch (err) {
           console.error('Failed to fetch device info:', err);
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          setPropertyUpdateStatus(`Error: ${errorMsg}. You can still provision WiFi.`);
         } finally {
           setIsLoadingInfo(false);
         }
@@ -140,6 +150,40 @@ const DeviceManagement: React.FC = () => {
     setDeviceProperties([]);
     setPropertyValues({});
     setPropertyUpdateStatus('');
+  };
+
+  const handleRetryDeviceInfo = async () => {
+    if (!connectedDevice) return;
+    
+    setIsLoadingInfo(true);
+    setPropertyUpdateStatus('Retrying to read device information...');
+    
+    try {
+      // Wait a bit longer this time
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const info = await getDeviceInfo();
+      
+      if (info) {
+        setDeviceInfo(info);
+        const properties = bluetoothService.parseDeviceProperties(info);
+        setDeviceProperties(properties);
+        
+        // Initialize property values from device
+        const initialValues: { [key: string]: any } = {};
+        properties.forEach(prop => {
+          initialValues[prop.name] = prop.value;
+        });
+        setPropertyValues(initialValues);
+        setPropertyUpdateStatus('Device ready for configuration');
+      }
+    } catch (err) {
+      console.error('Retry failed:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      setPropertyUpdateStatus(`Error: ${errorMsg}`);
+    } finally {
+      setIsLoadingInfo(false);
+    }
   };
 
   const handlePropertyChange = (propertyName: string, value: any) => {
@@ -481,20 +525,49 @@ const DeviceManagement: React.FC = () => {
               <div>
                 <strong>{connectedDevice.name}</strong>
                 <p className="device-id">ID: {connectedDevice.id}</p>
-                {deviceInfo && (
+                {deviceInfo ? (
                   <>
                     <p className="device-mac">MAC: {deviceInfo.macAddress}</p>
                     <p className="device-type">Type: {deviceInfo.deviceType}</p>
                   </>
+                ) : isLoadingInfo ? (
+                  <p className="device-status">Loading device info...</p>
+                ) : (
+                  <p className="device-status">⚠️ Device info not loaded</p>
                 )}
               </div>
             </div>
-            <button onClick={handleDisconnect} className="btn btn-secondary">
-              Disconnect
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {!deviceInfo && !isLoadingInfo && (
+                <button 
+                  onClick={handleRetryDeviceInfo} 
+                  className="btn btn-info"
+                  title="Retry reading device information"
+                >
+                  🔄 Retry
+                </button>
+              )}
+              <button onClick={handleDisconnect} className="btn btn-secondary">
+                Disconnect
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Show configuration error message if device is connected but info failed to load */}
+      {connectedDevice && !deviceInfo && !isLoadingInfo && (
+        <div className="alert alert-error">
+          <p><strong>Unable to read device configuration</strong></p>
+          <p>This can happen if:</p>
+          <ul>
+            <li>The device doesn't support the provisioning service</li>
+            <li>Multiple Bluetooth operations were attempted simultaneously</li>
+            <li>The connection wasn't fully established</li>
+          </ul>
+          <p>Try clicking the <strong>Retry</strong> button above, or disconnect and reconnect the device.</p>
+        </div>
+      )}
 
       {/* Show different content based on device type */}
       {connectedDevice && deviceInfo && deviceInfo.deviceType === 'CloudNode' && (
@@ -543,14 +616,14 @@ const DeviceManagement: React.FC = () => {
         </div>
       )}
 
-      {connectedDevice && deviceInfo && deviceInfo.deviceType === 'SensorNode' && (
+      {connectedDevice && deviceInfo && deviceInfo.deviceType !== 'CloudNode' && (
         <>
           <div className="properties-section">
-            <h2>Sensor Properties</h2>
-            <p>Configure sensor-specific properties</p>
+            <h2>Sensor Configuration</h2>
+            <p>Configure sensor properties for {deviceInfo.deviceType}</p>
             {isLoadingInfo ? (
               <div className="loading-message">Loading device properties...</div>
-            ) : (
+            ) : deviceProperties.length > 0 ? (
               <form onSubmit={handleUpdateProperties}>
                 {deviceProperties.map((prop) => (
                   <div key={prop.name} className="form-group">
@@ -587,6 +660,12 @@ const DeviceManagement: React.FC = () => {
                   {isUpdatingProperties ? 'Updating...' : 'Update Properties'}
                 </button>
               </form>
+            ) : (
+              <div className="info-message">
+                <p>No configurable properties found for this device.</p>
+                <p>Device type: <strong>{deviceInfo.deviceType}</strong></p>
+                <p>You can still assign it to a cloud node below.</p>
+              </div>
             )}
 
             {propertyUpdateStatus && (

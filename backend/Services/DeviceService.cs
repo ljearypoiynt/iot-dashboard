@@ -1,4 +1,6 @@
+using Backend.Data;
 using Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services;
 
@@ -28,21 +30,24 @@ public interface IDeviceService
 
 public class DeviceService : IDeviceService
 {
-    private readonly List<IoTDevice> _devices = new();
-    private readonly List<SensorData> _sensorData = new();
+    private readonly ApplicationDbContext _context;
 
-    public Task<IEnumerable<IoTDevice>> GetAllDevicesAsync()
+    public DeviceService(ApplicationDbContext context)
     {
-        return Task.FromResult<IEnumerable<IoTDevice>>(_devices);
+        _context = context;
     }
 
-    public Task<IoTDevice?> GetDeviceByIdAsync(string id)
+    public async Task<IEnumerable<IoTDevice>> GetAllDevicesAsync()
     {
-        var device = _devices.FirstOrDefault(d => d.Id == id);
-        return Task.FromResult(device);
+        return await _context.Devices.ToListAsync();
     }
 
-    public Task<IoTDevice> RegisterDeviceAsync(ProvisioningRequest request)
+    public async Task<IoTDevice?> GetDeviceByIdAsync(string id)
+    {
+        return await _context.Devices.FindAsync(id);
+    }
+
+    public async Task<IoTDevice> RegisterDeviceAsync(ProvisioningRequest request)
     {
         var device = new IoTDevice
         {
@@ -53,36 +58,39 @@ public class DeviceService : IDeviceService
             Status = DeviceStatus.Provisioning
         };
 
-        _devices.Add(device);
-        return Task.FromResult(device);
+        _context.Devices.Add(device);
+        await _context.SaveChangesAsync();
+        return device;
     }
 
-    public Task<bool> UpdateDeviceStatusAsync(string id, DeviceStatus status)
+    public async Task<bool> UpdateDeviceStatusAsync(string id, DeviceStatus status)
     {
-        var device = _devices.FirstOrDefault(d => d.Id == id);
+        var device = await _context.Devices.FindAsync(id);
         if (device == null)
-            return Task.FromResult(false);
+            return false;
 
         device.Status = status;
         device.LastSeen = DateTime.UtcNow;
-        return Task.FromResult(true);
+        await _context.SaveChangesAsync();
+        return true;
     }
 
-    public Task<bool> DeleteDeviceAsync(string id)
+    public async Task<bool> DeleteDeviceAsync(string id)
     {
-        var device = _devices.FirstOrDefault(d => d.Id == id);
+        var device = await _context.Devices.FindAsync(id);
         if (device == null)
-            return Task.FromResult(false);
+            return false;
 
-        _devices.Remove(device);
-        return Task.FromResult(true);
+        _context.Devices.Remove(device);
+        await _context.SaveChangesAsync();
+        return true;
     }
 
-    public Task<IoTDevice?> UpdateDeviceMetadataAsync(string id, Dictionary<string, string> metadata)
+    public async Task<IoTDevice?> UpdateDeviceMetadataAsync(string id, Dictionary<string, string> metadata)
     {
-        var device = _devices.FirstOrDefault(d => d.Id == id);
+        var device = await _context.Devices.FindAsync(id);
         if (device == null)
-            return Task.FromResult<IoTDevice?>(null);
+            return null;
 
         foreach (var (key, value) in metadata)
         {
@@ -90,39 +98,40 @@ public class DeviceService : IDeviceService
         }
         device.LastSeen = DateTime.UtcNow;
         
-        return Task.FromResult<IoTDevice?>(device);
+        await _context.SaveChangesAsync();
+        return device;
     }
 
-    public Task<AssignSensorResult> AssignSensorToCloudNodeAsync(string sensorId, string cloudNodeId)
+    public async Task<AssignSensorResult> AssignSensorToCloudNodeAsync(string sensorId, string cloudNodeId)
     {
-        var sensor = _devices.FirstOrDefault(d => d.Id == sensorId);
-        var cloudNode = _devices.FirstOrDefault(d => d.Id == cloudNodeId);
+        var sensor = await _context.Devices.FindAsync(sensorId);
+        var cloudNode = await _context.Devices.FindAsync(cloudNodeId);
 
         if (sensor == null)
         {
-            return Task.FromResult(new AssignSensorResult
+            return new AssignSensorResult
             {
                 Success = false,
                 Message = "Sensor not found"
-            });
+            };
         }
 
         if (cloudNode == null)
         {
-            return Task.FromResult(new AssignSensorResult
+            return new AssignSensorResult
             {
                 Success = false,
                 Message = "Cloud node not found"
-            });
+            };
         }
 
         if (string.IsNullOrEmpty(cloudNode.MacAddress))
         {
-            return Task.FromResult(new AssignSensorResult
+            return new AssignSensorResult
             {
                 Success = false,
                 Message = "Cloud node does not have a MAC address"
-            });
+            };
         }
 
         // Update sensor with cloud node reference
@@ -136,29 +145,33 @@ public class DeviceService : IDeviceService
             cloudNode.AssignedSensorIds.Add(sensorId);
         }
 
-        return Task.FromResult(new AssignSensorResult
+        await _context.SaveChangesAsync();
+
+        return new AssignSensorResult
         {
             Success = true,
             Message = $"Sensor assigned to cloud node successfully",
             CloudNodeMacAddress = cloudNode.MacAddress
-        });
+        };
     }
 
-    public Task<IEnumerable<IoTDevice>> GetDevicesByTypeAsync(string deviceType)
+    public async Task<IEnumerable<IoTDevice>> GetDevicesByTypeAsync(string deviceType)
     {
-        var devices = _devices.Where(d => d.DeviceType == deviceType);
-        return Task.FromResult<IEnumerable<IoTDevice>>(devices);
+        return await _context.Devices
+            .Where(d => d.DeviceType == deviceType)
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<IoTDevice>> GetSensorsForCloudNodeAsync(string cloudNodeId)
+    public async Task<IEnumerable<IoTDevice>> GetSensorsForCloudNodeAsync(string cloudNodeId)
     {
-        var sensors = _devices.Where(d => d.CloudNodeId == cloudNodeId);
-        return Task.FromResult<IEnumerable<IoTDevice>>(sensors);
+        return await _context.Devices
+            .Where(d => d.CloudNodeId == cloudNodeId)
+            .ToListAsync();
     }
 
-    public Task<SensorData> SaveSensorDataAsync(SensorDataRequest request)
+    public async Task<SensorData> SaveSensorDataAsync(SensorDataRequest request)
     {
-        var device = _devices.FirstOrDefault(d => d.Id == request.DeviceId);
+        var device = await _context.Devices.FindAsync(request.DeviceId);
         
         var sensorData = new SensorData
         {
@@ -168,7 +181,7 @@ public class DeviceService : IDeviceService
             Data = request.Data
         };
 
-        _sensorData.Add(sensorData);
+        _context.SensorData.Add(sensorData);
 
         // Update device last seen
         if (device != null)
@@ -177,35 +190,36 @@ public class DeviceService : IDeviceService
             device.Status = DeviceStatus.Online;
         }
 
-        return Task.FromResult(sensorData);
+        await _context.SaveChangesAsync();
+        return sensorData;
     }
 
-    public Task<IEnumerable<SensorData>> GetAllSensorDataAsync()
+    public async Task<IEnumerable<SensorData>> GetAllSensorDataAsync()
     {
-        var orderedData = _sensorData.OrderByDescending(d => d.ReceivedAt);
-        return Task.FromResult<IEnumerable<SensorData>>(orderedData);
+        return await _context.SensorData
+            .OrderByDescending(d => d.ReceivedAt)
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<SensorData>> GetSensorDataByDeviceIdAsync(string deviceId, int? limit = null)
+    public async Task<IEnumerable<SensorData>> GetSensorDataByDeviceIdAsync(string deviceId, int? limit = null)
     {
-        IEnumerable<SensorData> query = _sensorData
+        var query = _context.SensorData
             .Where(d => d.DeviceId == deviceId)
             .OrderByDescending(d => d.ReceivedAt);
 
         if (limit.HasValue)
         {
-            query = query.Take(limit.Value);
+            return await query.Take(limit.Value).ToListAsync();
         }
 
-        return Task.FromResult(query);
+        return await query.ToListAsync();
     }
 
-    public Task<IEnumerable<SensorData>> GetSensorDataByTimeRangeAsync(DateTime startTime, DateTime endTime)
+    public async Task<IEnumerable<SensorData>> GetSensorDataByTimeRangeAsync(DateTime startTime, DateTime endTime)
     {
-        var data = _sensorData
+        return await _context.SensorData
             .Where(d => d.ReceivedAt >= startTime && d.ReceivedAt <= endTime)
-            .OrderByDescending(d => d.ReceivedAt);
-
-        return Task.FromResult<IEnumerable<SensorData>>(data);
+            .OrderByDescending(d => d.ReceivedAt)
+            .ToListAsync();
     }
 }

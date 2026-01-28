@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: iot-dashboard-project
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: IoT Dashboard Project
+  
+  # Allow deployments to the iot-dashboard namespace
+  destinations:
+    - namespace: iot-dashboard
+      server: https://kubernetes.default.svc
+      
+  # Allow all cluster-scoped resources to be deployed
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+      
+  # Allow all namespaced resources
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+      
+  # Source repositories
+  sourceRepos:
+    - '*'  # Allow all repositories (change to specific repo for production)
+    
+  # Orphaned resources monitoring
+  orphanedResources:
+    warn: true

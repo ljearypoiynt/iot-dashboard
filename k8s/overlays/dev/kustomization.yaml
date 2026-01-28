@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: iot-dashboard-dev
+
+# Reference the base configurations
+bases:
+  - ../../
+
+# Override namespace
+nameSuffix: -dev
+
+# Development-specific labels
+commonLabels:
+  environment: development
+
+# Development-specific patches
+patchesStrategicMerge:
+  - replica-patch.yaml
+
+# Override image tags for dev
+images:
+  - name: iot-dashboard-backend
+    newTag: dev
+  - name: iot-dashboard-frontend
+    newTag: dev

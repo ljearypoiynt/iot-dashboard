@@ -148,10 +148,15 @@
 
 .device-id,
 .device-mac,
-.device-type {
+.device-type,
+.device-status {
   font-size: 0.85rem;
   color: #a0a0a0;
   margin: 4px 0 0 0;
+}
+
+.device-status {
+  font-style: italic;
 }
 
 .form-group {
@@ -236,6 +241,40 @@
   font-style: italic;
 }
 
+.info-message {
+  padding: 20px;
+  background: #2a3a4a;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+  color: #d0d0d0;
+}
+
+.info-message p {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.info-message p:first-child {
+  margin-top: 0;
+}
+
+.info-message p:last-child {
+  margin-bottom: 0;
+}
+
+.device-details {
+  margin-top: 15px;
+  padding: 12px;
+  background: #1a2a3a;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.device-details strong {
+  color: #4ade80;
+}
+
 .alert {
   padding: 15px;
   margin-bottom: 20px;
@@ -246,6 +285,24 @@
   background-color: #4a1f1f;
   border: 1px solid #8b3a3a;
   color: #ff8080;
+}
+
+.alert-error p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.alert-error ul {
+  margin: 10px 0 10px 20px;
+  padding: 0;
+}
+
+.alert-error li {
+  margin: 5px 0;
+}
+
+.alert-error strong {
+  color: #ff9999;
 }
 
 .unit {

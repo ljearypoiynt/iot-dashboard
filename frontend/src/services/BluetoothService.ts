@@ -172,6 +172,11 @@ export class BluetoothService {
     }
 
     try {
+      // Ensure connection is active
+      if (!this.connectedDevice.server.connected) {
+        throw new Error('Device connection lost');
+      }
+
       const service = await this.connectedDevice.server.getPrimaryService(
         this.PROVISIONING_SERVICE_UUID
       );
@@ -180,9 +185,14 @@ export class BluetoothService {
         this.DEVICE_INFO_CHAR_UUID
       );
 
+      // Add a small delay to ensure characteristic is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const value = await infoCharacteristic.readValue();
       const decoder = new TextDecoder();
       const jsonString = decoder.decode(value);
+      
+      console.log('Raw device info received:', jsonString);
       
       const deviceInfo: DeviceInfo = JSON.parse(jsonString);
       
@@ -193,7 +203,9 @@ export class BluetoothService {
       
       return deviceInfo;
     } catch (error) {
-      throw new Error(`Failed to read device info: ${error}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('Failed to read device info:', errorMsg);
+      throw new Error(`Failed to read device info: ${errorMsg}`);
     }
   }
 

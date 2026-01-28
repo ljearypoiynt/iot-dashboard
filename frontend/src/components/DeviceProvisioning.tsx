@@ -22,10 +22,13 @@ const DeviceProvisioning: React.FC = () => {
       if (connectedDevice && !deviceInfo) {
         setIsLoadingInfo(true);
         try {
+          console.log('Fetching device info for:', connectedDevice.name);
           const info = await getDeviceInfo();
+          console.log('Device info received:', info);
           if (info) {
             setDeviceInfo(info);
             const properties = bluetoothService.parseDeviceProperties(info);
+            console.log('Parsed properties:', properties);
             setDeviceProperties(properties);
             
             // Initialize property values from device
@@ -34,9 +37,13 @@ const DeviceProvisioning: React.FC = () => {
               initialValues[prop.name] = prop.value;
             });
             setPropertyValues(initialValues);
+          } else {
+            console.warn('No device info returned');
           }
         } catch (err) {
           console.error('Failed to fetch device info:', err);
+          // Show error to user
+          setPropertyUpdateStatus(`Error loading device info: ${err instanceof Error ? err.message : 'Unknown error'}`);
         } finally {
           setIsLoadingInfo(false);
         }
@@ -186,8 +193,76 @@ const DeviceProvisioning: React.FC = () => {
       </div>
 
       {connectedDevice && (
+        <div className="properties-section">
+          <h2>1. Device Configuration</h2>
+          {isLoadingInfo ? (
+            <div className="loading-message">Loading device information...</div>
+          ) : deviceInfo ? (
+            deviceProperties.length > 0 ? (
+              <form onSubmit={handleUpdateProperties}>
+                {deviceProperties.map((prop) => (
+                  <div key={prop.name} className="form-group">
+                    <label htmlFor={prop.name}>
+                      {prop.label}
+                      {prop.unit && <span className="unit"> ({prop.unit})</span>}:
+                    </label>
+                    {prop.type === 'number' ? (
+                      <input
+                        id={prop.name}
+                        type="number"
+                        step="any"
+                        value={propertyValues[prop.name] || ''}
+                        onChange={(e) => handlePropertyChange(prop.name, parseFloat(e.target.value))}
+                        required
+                      />
+                    ) : (
+                      <input
+                        id={prop.name}
+                        type="text"
+                        value={propertyValues[prop.name] || ''}
+                        onChange={(e) => handlePropertyChange(prop.name, e.target.value)}
+                        required
+                      />
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  type="submit"
+                  disabled={isUpdatingProperties}
+                  className="btn btn-primary"
+                >
+                  {isUpdatingProperties ? 'Updating...' : 'Update Properties'}
+                </button>
+              </form>
+            ) : (
+              <div className="info-message">
+                <p>This device doesn't have configurable properties, or properties couldn't be loaded.</p>
+                <p className="device-details">
+                  <strong>Device Type:</strong> {deviceInfo.deviceType}<br/>
+                  <strong>MAC Address:</strong> {deviceInfo.macAddress}
+                </p>
+              </div>
+            )
+          ) : (
+            <div className="info-message">
+              <p>Waiting for device to send configuration information...</p>
+              <p>If device info doesn't appear, the device may not support automatic configuration.</p>
+              <p>You can proceed with WiFi provisioning in the next section.</p>
+            </div>
+          )}
+
+          {propertyUpdateStatus && (
+            <div className="status-message">
+              {propertyUpdateStatus}
+            </div>
+          )}
+        </div>
+      )}
+
+      {connectedDevice && (
         <div className="provisioning-section">
-          <h2>WiFi Provisioning</h2>
+          <h2>2. WiFi Provisioning</h2>
           <form onSubmit={handleProvision}>
             <div className="form-group">
               <label htmlFor="ssid">WiFi SSID:</label>
@@ -225,58 +300,6 @@ const DeviceProvisioning: React.FC = () => {
           {provisioningStatus && (
             <div className="status-message">
               {provisioningStatus}
-            </div>
-          )}
-        </div>
-      )}
-
-      {connectedDevice && deviceInfo && deviceProperties.length > 0 && (
-        <div className="properties-section">
-          <h2>Device Properties</h2>
-          {isLoadingInfo ? (
-            <div className="loading-message">Loading device properties...</div>
-          ) : (
-            <form onSubmit={handleUpdateProperties}>
-              {deviceProperties.map((prop) => (
-                <div key={prop.name} className="form-group">
-                  <label htmlFor={prop.name}>
-                    {prop.label}
-                    {prop.unit && <span className="unit"> ({prop.unit})</span>}:
-                  </label>
-                  {prop.type === 'number' ? (
-                    <input
-                      id={prop.name}
-                      type="number"
-                      step="any"
-                      value={propertyValues[prop.name] || ''}
-                      onChange={(e) => handlePropertyChange(prop.name, parseFloat(e.target.value))}
-                      required
-                    />
-                  ) : (
-                    <input
-                      id={prop.name}
-                      type="text"
-                      value={propertyValues[prop.name] || ''}
-                      onChange={(e) => handlePropertyChange(prop.name, e.target.value)}
-                      required
-                    />
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="submit"
-                disabled={isUpdatingProperties}
-                className="btn btn-primary"
-              >
-                {isUpdatingProperties ? 'Updating...' : 'Update Properties'}
-              </button>
-            </form>
-          )}
-
-          {propertyUpdateStatus && (
-            <div className="status-message">
-              {propertyUpdateStatus}
             </div>
           )}
         </div>
