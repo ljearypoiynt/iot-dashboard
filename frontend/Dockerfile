@@ -9,6 +9,10 @@ RUN npm install
 # Copy source files
 COPY . .
 
+# Build-time API base URL (CRA reads REACT_APP_* at build time)
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+
 # Build the app
 RUN npm run build
 

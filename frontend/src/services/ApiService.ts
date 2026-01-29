@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:5071/api';
+const runtimeApiBaseUrl = window.__APP_CONFIG__?.API_BASE_URL;
+const API_BASE_URL = (runtimeApiBaseUrl ?? process.env.REACT_APP_API_BASE_URL ?? 'http://localhost:5071/api').replace(/\/$/, '');
 
 export interface IoTDevice {
   id: string;

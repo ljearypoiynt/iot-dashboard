@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+          name: http
+        volumeMounts:
+        - name: frontend-config
+          mountPath: /usr/share/nginx/html/config.js
+          subPath: config.js
+          readOnly: true
+        resources:
+          requests:
+            memory: {{ .Values.frontend.resources.requests.memory }}
+            cpu: {{ .Values.frontend.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.frontend.resources.limits.memory }}
+            cpu: {{ .Values.frontend.resources.limits.cpu }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.frontend.probes.liveness.path }}
+            port: 80
+          initialDelaySeconds: {{ .Values.frontend.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.frontend.probes.liveness.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.frontend.probes.readiness.path }}
+            port: 80
+          initialDelaySeconds: {{ .Values.frontend.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.frontend.probes.readiness.periodSeconds }}
+      volumes:
+      - name: frontend-config
+        configMap:
+          name: frontend-config

@@ -1,0 +1,30 @@
+frontend:
+  image:
+    repository: iot-dashboard-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 5
+  config:
+    apiBaseUrl: "https://dashboardapi.poiynt.com/api"
+
+namespace: iot-dashboard
