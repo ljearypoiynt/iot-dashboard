@@ -21,11 +21,9 @@ spec:
         image: cloudflare/cloudflared:latest
         imagePullPolicy: IfNotPresent
         command: 
-          - cloudflared
-          - tunnel
-          - --config
-          - /etc/cloudflared/config/config.yaml
-          - run
+          - sh
+          - -c
+          - "cloudflared --config=/etc/cloudflared/config/config.yaml --origin-cert=/etc/cloudflared/creds/cert.pem tunnel run"
         ports:
         - containerPort: 7844
           name: metrics
