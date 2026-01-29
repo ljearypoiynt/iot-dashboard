@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflare-tunnel-config
+  namespace: iot-dashboard
+data:
+  config.yaml: |
+    tunnel: iot-dashboard
+    credentials-file: /etc/cloudflared/creds/credentials.json
+
+    ingress:
+      - hostname: dashboard.poiynt.com
+        service: http://frontend-service.iot-dashboard.svc.cluster.local:80
+      
+      - hostname: dashboardapi.poiynt.com
+        service: http://backend-service.iot-dashboard.svc.cluster.local:5000
+      
+      - service: http_status:404
+
+    loglevel: info

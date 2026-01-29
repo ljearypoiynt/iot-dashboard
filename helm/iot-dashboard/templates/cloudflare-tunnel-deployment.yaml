@@ -1,0 +1,66 @@
+{{- if .Values.cloudflare.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-tunnel
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: cloudflare-tunnel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-tunnel
+  template:
+    metadata:
+      labels:
+        app: cloudflare-tunnel
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        imagePullPolicy: IfNotPresent
+        command: 
+          - cloudflared
+          - tunnel
+          - --config
+          - /etc/cloudflared/config/config.yaml
+          - run
+        ports:
+        - containerPort: 7844
+          name: metrics
+        volumeMounts:
+        - name: tunnel-config
+          mountPath: /etc/cloudflared/config
+          readOnly: true
+        - name: tunnel-credentials
+          mountPath: /etc/cloudflared/creds
+          readOnly: true
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: metrics
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: metrics
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: tunnel-config
+        configMap:
+          name: cloudflare-tunnel-config
+      - name: tunnel-credentials
+        secret:
+          secretName: cloudflare-tunnel-credentials
+{{- end }}

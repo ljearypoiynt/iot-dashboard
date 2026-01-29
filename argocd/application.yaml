@@ -21,6 +21,17 @@ spec:
         frontend:
           config:
             apiBaseUrl: "https://dashboardapi.poiynt.com/api"
+        cloudflare:
+          enabled: true
+          tunnelName: iot-dashboard
+          logLevel: info
+          frontendHostname: dashboard.poiynt.com
+          apiHostname: dashboardapi.poiynt.com
+          credentials:
+            AccountTag: "4c84b5d670564238dfccc3a7d4419965"
+            TunnelSecret: "rKPxHHDkcHJPsznQDRUgoOS5c7BvKzJqI0aDYPQ6o44="
+            TunnelID: "0b0b67bc-20fa-400b-a3f9-b4bc8bbadd0e"
+            Endpoint: ""
     
   destination:
     server: https://kubernetes.default.svc

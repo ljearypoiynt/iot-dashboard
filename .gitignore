@@ -430,3 +430,5 @@ FodyWeavers.xsd
 *.dll
 
 *.exe
+
+backend/obj/
