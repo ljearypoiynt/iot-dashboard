@@ -21,10 +21,10 @@ commonAnnotations:
 images:
   - name: iot-dashboard-backend
     newName: iot-dashboard-backend
-    newTag: v1.0.0
+    newTag: v1.0.3
   - name: iot-dashboard-frontend
     newName: iot-dashboard-frontend
-    newTag: v1.0.0
+    newTag: v1.0.3
 
 # Patches for different environments can be added here
 # patchesStrategicMerge:
