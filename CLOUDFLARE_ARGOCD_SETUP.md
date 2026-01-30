@@ -98,8 +98,8 @@ kubectl create secret generic cloudflare-tunnel-credentials `
   --namespace=iot-dashboard `
   --dry-run=client -o yaml > cloudflare-temp-secret.yaml
 
-# Seal the secret
-kubeseal --format=yaml < cloudflare-temp-secret.yaml > k8s/cloudflare-tunnel-sealed-secret.yaml
+# Seal the secret (PowerShell syntax)
+Get-Content cloudflare-temp-secret.yaml | kubeseal --format=yaml | Out-File -Encoding utf8 k8s/cloudflare-tunnel-sealed-secret.yaml
 
 # Clean up temporary file
 Remove-Item cloudflare-temp-secret.yaml

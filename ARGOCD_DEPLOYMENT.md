@@ -400,3 +400,8 @@ kubectl delete namespace argocd
 - [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
 - [Kustomize Documentation](https://kustomize.io/)
 - [GitOps Principles](https://opengitops.dev/)
+
+## Expose Argo
+- kubectl --address localhost,192.168.50.99 port-forward svc/argocd-server -n argocd 8082:443
+
+the local ip address of the running server
