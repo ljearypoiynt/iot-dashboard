@@ -49,11 +49,46 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 # https://localhost:8080
 ```
 
+### Cloudflare Tunnel + ArgoCD (Production)
+```powershell
+# Run automated setup
+.\setup-cloudflare-tunnel.ps1 -Domain "yourdomain.com"
+
+# Or manual setup (see CLOUDFLARE_ARGOCD_SETUP.md)
+cloudflared tunnel create iot-dashboard
+cloudflared tunnel route dns iot-dashboard dashboard.yourdomain.com
+
+# Commit and push
+git add k8s/
+git commit -m "Configure Cloudflare Tunnel"
+git push origin main
+
+# Sync with ArgoCD
+argocd app sync iot-dashboard
+```
+
+## Deployment Options
+
+| Option | Use Case | Pros | Cons |
+|--------|----------|------|------|
+| **Local Dev** | Development | Fast iteration, simple | Not production-ready |
+| **Docker Compose** | Testing | Easy setup, isolated | Not scalable |
+| **Minikube** | K8s learning | Local K8s environment | Resource intensive |
+| **ArgoCD** | GitOps workflow | Declarative, automated | Requires K8s knowledge |
+| **Cloudflare + ArgoCD** | Production | Secure, scalable, HTTPS | More complex setup |
+
 ## Documentation
-- [Quick Start Guide](QUICK_START.md)
-- [Minikube Deployment](MINIKUBE_DEPLOYMENT.md)
-- [ArgoCD GitOps Setup](ARGOCD_DEPLOYMENT.md)
+
+### Deployment Guides
+- [Quick Start Guide](QUICK_START.md) - Local development setup
+- [Minikube Deployment](MINIKUBE_DEPLOYMENT.md) - Deploy to local Kubernetes
+- [ArgoCD GitOps Setup](ARGOCD_DEPLOYMENT.md) - GitOps deployment with ArgoCD
+- **[Cloudflare + ArgoCD Setup](CLOUDFLARE_ARGOCD_SETUP.md)** - Production-ready with secure tunnel
+
+### Configuration & Setup
 - [Database Setup](DATABASE_SETUP.md)
+- [Cloudflare Tunnel (Local)](CLOUDFLARE_TUNNEL_SETUP.md) - Local development tunnel
+- [Sealed Secrets Setup](SEALED_SECRETS_SETUP.md)
 - [Implementation Summary](IMPLEMENTATION_SUMMARY.md)
 
 ## Repository Structure

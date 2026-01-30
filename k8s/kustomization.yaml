@@ -8,6 +8,9 @@ resources:
   - postgres.yaml
   - backend.yaml
   - frontend.yaml
+  - cloudflare-tunnel-config.yaml
+  - cloudflare-tunnel-sealed-secret.yaml
+  - cloudflare-tunnel-deployment.yaml
 
 # Common labels for all resources
 commonLabels:
