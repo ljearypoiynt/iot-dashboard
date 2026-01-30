@@ -44,18 +44,6 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-        livenessProbe:
-          httpGet:
-            path: /ready
-            port: metrics
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: metrics
-          initialDelaySeconds: 5
-          periodSeconds: 5
       volumes:
       - name: tunnel-config
         configMap:
