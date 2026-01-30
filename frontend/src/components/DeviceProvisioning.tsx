@@ -181,6 +181,12 @@ const DeviceProvisioning: React.FC = () => {
                   <>
                     <p className="device-mac">MAC: {deviceInfo.macAddress}</p>
                     <p className="device-type">Type: {deviceInfo.deviceType}</p>
+                    {deviceInfo.wifiConnected && (
+                      <>
+                        <p className="device-wifi">WiFi: Connected to {deviceInfo.wifiSSID}</p>
+                        <p className="device-ip">IP: {deviceInfo.wifiIP}</p>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -262,7 +268,13 @@ const DeviceProvisioning: React.FC = () => {
 
       {connectedDevice && (
         <div className="provisioning-section">
-          <h2>2. WiFi Provisioning</h2>
+          <h2>2. WiFi Configuration</h2>
+          {deviceInfo?.wifiConnected && (
+            <div className="info-message current-wifi">
+              <p>📡 Currently connected to: <strong>{deviceInfo.wifiSSID}</strong></p>
+              <p>You can update the WiFi connection below if needed.</p>
+            </div>
+          )}
           <form onSubmit={handleProvision}>
             <div className="form-group">
               <label htmlFor="ssid">WiFi SSID:</label>

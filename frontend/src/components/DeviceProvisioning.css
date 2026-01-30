@@ -2,195 +2,47 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: var(--font-family);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   background-color: #1a1a1a;
   min-height: 100vh;
   color: #e0e0e0;
 }
 
-/* Device Management Layout */
-.device-management {
+.provisioning-container h1 {
+  color: #4ade80;
+  margin-bottom: 30px;
+  text-align: left;
+  font-size: 1.5rem;
   display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 100vh;
-  background-color: var(--color-bg-primary);
+  align-items: center;
+  gap: 10px;
 }
 
-.device-management-content {
-  flex: 1;
-  padding: 32px 24px;
-  width: 100%;
-  box-sizing: border-box;
+.provisioning-container h2 {
+  color: #e0e0e0;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
 }
 
-.devices-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 32px;
-  width: 100%;
-}
-
-.grid-column {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Connected Device Panel */
-.connected-device-panel {
-  background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 32px;
-}
-
-.connected-device-panel h3 {
-  margin: 0 0 16px 0;
-  color: var(--color-accent-green);
+.provisioning-container h3 {
+  color: #b0b0b0;
+  margin-top: 20px;
+  margin-bottom: 10px;
   font-size: 1.1rem;
 }
 
-.connected-device-panel form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
 }
 
-.connected-device-panel input {
-  padding: 10px 12px;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-primary);
-  font-size: 0.9rem;
-}
-
-.connected-device-panel input:focus {
-  outline: none;
-  border-color: var(--color-accent-green);
-  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
-}
-
-/* Buttons - Using Button.css base styles */
-.btn-primary {
-  background-color: var(--color-accent-green);
-  color: #000;
-  font-weight: 600;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-accent-green-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.status-message {
-  padding: 12px;
-  background-color: rgba(74, 222, 128, 0.1);
-  border: 1px solid var(--color-accent-green);
-  border-radius: 6px;
-  color: var(--color-text-primary);
-  font-size: 0.9rem;
-  margin: 12px 0;
-}
-
-/* Test Device Form */
-.test-device-form {
-  background-color: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 32px;
-}
-
-.test-device-form h3 {
-  margin: 0 0 12px 0;
-  color: var(--color-text-primary);
-}
-
-.test-device-form select,
-.test-device-form input {
-  width: 100%;
-  padding: 10px 12px;
-  background-color: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-primary);
-  margin-bottom: 12px;
-}
-
-.test-device-form button {
-  padding: 10px 20px;
-  background-color: var(--color-accent-green);
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.test-device-form button:hover {
-  background-color: var(--color-accent-green-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .devices-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .device-management-content {
-    padding: 24px 16px;
-  }
-}
-
-@media (max-width: 768px) {
-  .device-management-content {
-    padding: 16px 12px;
-  }
-
-  .devices-grid {
-    gap: 16px;
-  }
-
-  .connected-device-panel {
-    padding: 16px;
-  }
-
-  .btn-primary {
-    padding: 8px 16px;
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .device-management-content {
-    padding: 12px 8px;
-  }
-
-  .devices-grid {
-    gap: 12px;
-  }
-
-  .btn-primary {
-    padding: 8px 12px;
-    width: 100%;
-    justify-content: center;
-  }
+.alert-error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c00;
 }
 
 .device-section,
@@ -222,20 +74,17 @@
 .scan-button {
   padding: 16px 48px !important;
   font-size: 1.1rem !important;
-  background-color: var(--color-accent-green) !important;
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
   color: #000 !important;
   border-radius: 8px !important;
   font-weight: 600 !important;
   display: flex;
   align-items: center;
   gap: 8px;
-  border: none !important;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .scan-button:hover:not(:disabled) {
-  background-color: var(--color-accent-green-hover) !important;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
 }
@@ -300,10 +149,21 @@
 .device-id,
 .device-mac,
 .device-type,
+.device-wifi,
+.device-ip,
 .device-status {
   font-size: 0.85rem;
   color: #a0a0a0;
   margin: 4px 0 0 0;
+}
+
+.device-wifi {
+  color: #4ade80;
+  font-weight: 500;
+}
+
+.device-ip {
+  color: #60a5fa;
 }
 
 .device-status {
@@ -398,6 +258,11 @@
   border-radius: 8px;
   border-left: 4px solid #3b82f6;
   color: #d0d0d0;
+}
+
+.info-message.current-wifi {
+  background: #1f3a2f;
+  border-left-color: #4ade80;
 }
 
 .info-message p {

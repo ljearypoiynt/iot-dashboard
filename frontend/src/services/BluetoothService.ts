@@ -20,6 +20,9 @@ export interface DeviceInfo {
   macAddress: string;
   deviceType: string;
   properties: { [key: string]: any };
+  wifiConnected?: boolean;
+  wifiSSID?: string;
+  wifiIP?: string;
 }
 
 export interface ESP32Device {
