@@ -240,9 +240,11 @@ const DeviceManagement: React.FC = () => {
   const handleDeleteDevice = async (device: IoTDevice) => {
     if (window.confirm(`Are you sure you want to delete ${device.name}?`)) {
       try {
+        await apiService.deleteDevice(device.id);
         setAllDevices(prev => prev.filter(d => d.id !== device.id));
       } catch (err) {
         console.error('Failed to delete device:', err);
+        alert(`Error deleting device: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }
   };
