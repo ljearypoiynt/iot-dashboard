@@ -16,15 +16,18 @@ metadata:
   namespace: iot-dashboard
   labels:
     app: frontend
+    app.kubernetes.io/managed-by: argocd
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: frontend
+      app.kubernetes.io/managed-by: argocd
   template:
     metadata:
       labels:
         app: frontend
+        app.kubernetes.io/managed-by: argocd
     spec:
       containers:
       - name: frontend

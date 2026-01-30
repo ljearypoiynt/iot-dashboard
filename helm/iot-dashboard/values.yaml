@@ -2,7 +2,7 @@ frontend:
   image:
     repository: iot-dashboard-frontend
     tag: latest
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   service:
     type: NodePort
     port: 80

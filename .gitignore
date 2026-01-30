@@ -432,3 +432,5 @@ FodyWeavers.xsd
 *.exe
 
 backend/obj/
+
+backend/bin/Debug/net10.0/

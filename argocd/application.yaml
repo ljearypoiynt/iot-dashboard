@@ -15,14 +15,7 @@ spec:
     # Option 2: For local development without Git, use a local path (temporary)
     #repoURL: https://github.com/ljearypoiynt/iot-dashboard  # Local file path for testing
     targetRevision: HEAD
-    path: helm/iot-dashboard
-    helm:
-      values: |
-        frontend:
-          config:
-            apiBaseUrl: "https://dashboardapi.poiynt.com/api"
-        cloudflare:
-          enabled: false
+    path: k8s
     
   destination:
     server: https://kubernetes.default.svc

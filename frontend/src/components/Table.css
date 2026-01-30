@@ -1,0 +1,357 @@
+/* Table Container */
+.table-container {
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Table Header */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-tertiary);
+}
+
+.table-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.btn-refresh {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-accent-green);
+}
+
+.btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+/* Table Styles */
+.devices-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.devices-table thead {
+  background-color: rgba(74, 222, 128, 0.05);
+  border-bottom: 2px solid var(--color-accent-green);
+  position: sticky;
+  top: 0;
+}
+
+.devices-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-accent-green);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.devices-table tbody tr {
+  border-bottom: 1px solid var(--color-border-light);
+  transition: all 0.2s ease;
+}
+
+.devices-table tbody tr:hover {
+  background-color: rgba(74, 222, 128, 0.03);
+}
+
+.devices-table tbody tr.offline {
+  opacity: 0.7;
+}
+
+.devices-table td {
+  padding: 16px 20px;
+  color: var(--color-text-primary);
+}
+
+/* Table Cells */
+.cell-name {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.cell-type {
+  text-align: center;
+}
+
+.cell-mac {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.cell-status {
+  text-align: center;
+}
+
+.status-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.status-text {
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.cell-cloud {
+  font-size: 0.85rem;
+}
+
+.cloud-node {
+  padding: 4px 8px;
+  background-color: rgba(74, 222, 128, 0.1);
+  border-radius: 4px;
+  color: var(--color-accent-green);
+}
+
+.cloud-node.unassigned {
+  background-color: rgba(160, 160, 160, 0.1);
+  color: var(--color-text-secondary);
+}
+
+.cell-actions {
+  text-align: right;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-cloudnode {
+  background-color: rgba(74, 222, 128, 0.2);
+  color: var(--color-accent-green);
+  border: 1px solid var(--color-accent-green);
+}
+
+.badge-sensornode {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+}
+
+.badge-default {
+  background-color: rgba(160, 160, 160, 0.2);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-text-secondary);
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-action {
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid var(--color-accent-green);
+  color: var(--color-accent-green);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-action:hover {
+  background-color: var(--color-accent-green);
+  color: #000;
+}
+
+.btn-action.btn-danger {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.btn-action.btn-danger:hover {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.btn-more {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-more:hover {
+  border-color: var(--color-accent-green);
+  color: var(--color-accent-green);
+  background-color: rgba(74, 222, 128, 0.1);
+}
+
+/* Empty State */
+.table-empty {
+  padding: 60px 24px;
+  text-align: center;
+  background-color: var(--color-bg-tertiary);
+}
+
+.table-empty p {
+  margin: 0 0 8px 0;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+.table-empty p:first-child {
+  color: var(--color-text-primary);
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.table-empty-hint {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .devices-table th,
+  .devices-table td {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-action {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .devices-table {
+    min-width: 600px;
+  }
+
+  .devices-table th,
+  .devices-table td {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .cell-mac {
+    font-size: 0.75rem;
+  }
+
+  .table-header {
+    padding: 16px 12px;
+  }
+
+  .table-title {
+    font-size: 1rem;
+  }
+
+  .action-buttons {
+    gap: 4px;
+  }
+
+  .btn-action {
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-container {
+    border-radius: 8px;
+  }
+
+  .devices-table {
+    min-width: 100%;
+    font-size: 0.75rem;
+  }
+
+  .devices-table th,
+  .devices-table td {
+    padding: 8px 10px;
+  }
+
+  .table-header {
+    padding: 12px 10px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .table-title {
+    font-size: 0.95rem;
+  }
+
+  .btn-refresh {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .badge {
+    padding: 2px 8px;
+    font-size: 0.65rem;
+  }
+
+  .btn-action {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  .action-buttons {
+    gap: 3px;
+  }
+}

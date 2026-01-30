@@ -25,7 +25,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:8080")
+            policy.WithOrigins("http://localhost:3000", "http://localhost:8080", "https://dashboard.poiynt.com")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -40,11 +40,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply migrations automatically on startup
+// Apply migrations automatically on startup (fallback to EnsureCreated when no migrations exist)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    if (db.Database.GetMigrations().Any())
+    {
+        db.Database.Migrate();
+    }
+    else
+    {
+        db.Database.EnsureCreated();
+    }
 }
 
 // Configure the HTTP request pipeline.
