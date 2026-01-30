@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDevice } from '../context/DeviceContext';
 import { bluetoothService, DeviceProperty, DeviceInfo } from '../services/BluetoothService';
-import { apiService, IoTDevice as ApiIoTDevice } from '../services/ApiService';
+import { apiService } from '../services/ApiService';
 import PageHeader from './PageHeader';
 import DevicesTable, { IoTDevice } from './DevicesTable';
 import BluetoothScanner from './BluetoothScanner';
@@ -22,6 +22,7 @@ const DeviceManagement: React.FC = () => {
   const [allDevices, setAllDevices] = useState<IoTDevice[]>([]);
   const [scannerDevices, setScannerDevices] = useState<ScannerDevice[]>([]);
   const [cloudNodes, setCloudNodes] = useState<IoTDevice[]>([]);
+  const [sensorNodes, setSensorNodes] = useState<IoTDevice[]>([]);
   const [isLoadingDevices, setIsLoadingDevices] = useState(false);
   
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
@@ -38,6 +39,10 @@ const DeviceManagement: React.FC = () => {
   const [showTestDeviceForm, setShowTestDeviceForm] = useState(false);
   const [testDeviceType, setTestDeviceType] = useState<'CloudNode' | 'SensorNode'>('SensorNode');
   const [testDeviceStatus, setTestDeviceStatus] = useState('');
+  const [selectedSensorId, setSelectedSensorId] = useState('');
+  const [selectedCloudNodeId, setSelectedCloudNodeId] = useState('');
+  const [assignmentStatus, setAssignmentStatus] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
 
   useEffect(() => {
     loadDevices();
@@ -55,6 +60,7 @@ const DeviceManagement: React.FC = () => {
         macAddress: d.macAddress
       }));
       setAllDevices(tableDevices);
+      setSensorNodes(tableDevices.filter(d => d.type === 'SensorNode'));
       
       const cloudNodesList = await apiService.getCloudNodes();
       const tableCloudNodes: IoTDevice[] = cloudNodesList.map(d => ({
@@ -65,6 +71,12 @@ const DeviceManagement: React.FC = () => {
         macAddress: d.macAddress
       }));
       setCloudNodes(tableCloudNodes);
+      if (!selectedCloudNodeId && tableCloudNodes.length > 0) {
+        setSelectedCloudNodeId(tableCloudNodes[0].id);
+      }
+      if (!selectedSensorId && tableDevices.filter(d => d.type === 'SensorNode').length > 0) {
+        setSelectedSensorId(tableDevices.filter(d => d.type === 'SensorNode')[0].id);
+      }
     } catch (err) {
       console.error('Failed to load devices:', err);
     } finally {
@@ -184,6 +196,45 @@ const DeviceManagement: React.FC = () => {
 
   const handleRefresh = () => {
     loadDevices();
+  };
+
+  const handleAssignSensor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAssignmentStatus('');
+
+    if (!selectedSensorId || !selectedCloudNodeId) {
+      setAssignmentStatus('Please select both a sensor and a cloud node.');
+      return;
+    }
+
+    setIsAssigning(true);
+    setAssignmentStatus('Assigning sensor to cloud node...');
+
+    try {
+      const result = await apiService.assignSensorToCloudNode({
+        sensorId: selectedSensorId,
+        cloudNodeId: selectedCloudNodeId
+      });
+
+      let statusMessage = `Assigned successfully. Cloud node MAC: ${result.cloudNodeMacAddress}`;
+
+      if (connectedDevice && deviceInfo?.deviceType === 'SensorNode') {
+        try {
+          await updateDeviceProperties({ cloudNodeMAC: result.cloudNodeMacAddress });
+          statusMessage += ' (Updated connected sensor via BLE)';
+        } catch (err) {
+          statusMessage += ' (BLE update failed; reconnect to sensor to apply MAC)';
+        }
+      }
+
+      setAssignmentStatus(statusMessage);
+      await loadDevices();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to assign sensor.';
+      setAssignmentStatus(errorMessage);
+    } finally {
+      setIsAssigning(false);
+    }
   };
 
   const handleDeleteDevice = async (device: IoTDevice) => {
@@ -322,6 +373,51 @@ const DeviceManagement: React.FC = () => {
             {testDeviceStatus && <p>{testDeviceStatus}</p>}
           </div>
         )}
+
+        <div className="assignment-section">
+          <h3>Assign Sensor to Cloud Node</h3>
+          <form onSubmit={handleAssignSensor}>
+            <div className="form-group">
+              <label htmlFor="sensorSelect">Sensor Node</label>
+              <select
+                id="sensorSelect"
+                value={selectedSensorId}
+                onChange={(e) => setSelectedSensorId(e.target.value)}
+                disabled={sensorNodes.length === 0}
+              >
+                {sensorNodes.length === 0 && <option value="">No sensors available</option>}
+                {sensorNodes.map(sensor => (
+                  <option key={sensor.id} value={sensor.id}>
+                    {sensor.name}{sensor.macAddress ? ` (${sensor.macAddress})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="cloudNodeSelect">Cloud Node</label>
+              <select
+                id="cloudNodeSelect"
+                value={selectedCloudNodeId}
+                onChange={(e) => setSelectedCloudNodeId(e.target.value)}
+                disabled={cloudNodes.length === 0}
+              >
+                {cloudNodes.length === 0 && <option value="">No cloud nodes available</option>}
+                {cloudNodes.map(node => (
+                  <option key={node.id} value={node.id}>
+                    {node.name}{node.macAddress ? ` (${node.macAddress})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button className="btn btn-primary" type="submit" disabled={isAssigning}>
+              {isAssigning ? 'Assigning...' : 'Assign Sensor to Cloud Node'}
+            </button>
+          </form>
+
+          {assignmentStatus && <div className="status-message">{assignmentStatus}</div>}
+        </div>
       </div>
     </div>
   );

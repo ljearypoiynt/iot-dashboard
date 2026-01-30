@@ -22,7 +22,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: iot-dashboard-backend:v1.0.0
+    image: iot-dashboard-backend:v1.0.2
     container_name: iot-backend
     ports:
       - "5000:5000"
@@ -46,7 +46,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: iot-dashboard-frontend:v1.0.0
+    image: iot-dashboard-frontend:v1.0.2
     container_name: iot-frontend
     ports:
       - "8080:80"
