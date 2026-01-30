@@ -16,35 +16,49 @@ const DeviceProvisioning: React.FC = () => {
   const [isUpdatingProperties, setIsUpdatingProperties] = useState(false);
   const [propertyUpdateStatus, setPropertyUpdateStatus] = useState('');
 
-  // Removed useEffect - device info is now fetched immediately after connection in handleScanAndConnect
+  // Fetch device info when device connects
+  React.useEffect(() => {
+    if (!connectedDevice) return;
+
+    const fetchDeviceInfo = async () => {
+      try {
+        console.log('Fetching device info for:', connectedDevice.name);
+        const info = await getDeviceInfo();
+        console.log('Device info retrieved:', info);
+        
+        if (info) {
+          setDeviceInfo(info);
+          const properties = bluetoothService.parseDeviceProperties(info);
+          setDeviceProperties(properties);
+          
+          // Initialize property values
+          const initialValues: { [key: string]: any } = {};
+          properties.forEach(prop => {
+            initialValues[prop.name] = prop.value;
+          });
+          setPropertyValues(initialValues);
+          console.log('Device info updated in UI:', info);
+        } else {
+          console.warn('No device info returned');
+        }
+      } catch (err) {
+        console.error('Failed to fetch device info after connection:', err);
+      }
+    };
+
+    // Add delay to ensure device is fully connected
+    const timer = setTimeout(() => {
+      fetchDeviceInfo();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [connectedDevice, getDeviceInfo]);
 
   const handleScanAndConnect = async () => {
     clearError();
     try {
       const device = await bluetoothService.scanForDevices();
       await connectToDevice(device);
-      
-      // Force immediate device info fetch after connection
-      setTimeout(async () => {
-        try {
-          console.log('Fetching device info after connection...');
-          const info = await getDeviceInfo();
-          if (info) {
-            setDeviceInfo(info);
-            const properties = bluetoothService.parseDeviceProperties(info);
-            setDeviceProperties(properties);
-            
-            // Initialize property values
-            const initialValues: { [key: string]: any } = {};
-            properties.forEach(prop => {
-              initialValues[prop.name] = prop.value;
-            });
-            setPropertyValues(initialValues);
-          }
-        } catch (err) {
-          console.error('Failed to fetch device info after connection:', err);
-        }
-      }, 1000);
     } catch (err) {
       console.error('Failed to scan and connect:', err);
     }
