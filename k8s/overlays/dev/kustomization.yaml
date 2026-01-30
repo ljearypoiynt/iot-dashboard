@@ -21,6 +21,6 @@ patchesStrategicMerge:
 # Override image tags for dev
 images:
   - name: iot-dashboard-backend
-    newTag: dev
+    newTag: v1.0.0-dev
   - name: iot-dashboard-frontend
-    newTag: dev
+    newTag: v1.0.0-dev

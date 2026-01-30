@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: backend
-        image: iot-dashboard-backend:latest
-        imagePullPolicy: IfNotPresent
+        image: iot-dashboard-backend:v1.0.0
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
           name: http
