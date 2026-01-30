@@ -42,20 +42,6 @@ const Dashboard: React.FC = () => {
   });
   const [availableDataKeys, setAvailableDataKeys] = useState<string[]>([]);
 
-  // Load devices on mount
-  useEffect(() => {
-    loadDevices();
-  }, []);
-
-  // Auto-refresh sensor data every 10 seconds
-  useEffect(() => {
-    if (widgets.length > 0) {
-      loadSensorData();
-      const interval = setInterval(loadSensorData, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [widgets]);
-
   const loadDevices = async () => {
     try {
       const allDevices = await apiService.getDevices();
@@ -84,6 +70,22 @@ const Dashboard: React.FC = () => {
     
     setSensorDataMap(dataMap);
   };
+
+  // Load devices on mount
+  useEffect(() => {
+    loadDevices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refresh sensor data every 10 seconds
+  useEffect(() => {
+    if (widgets.length > 0) {
+      loadSensorData();
+      const interval = setInterval(loadSensorData, 10000);
+      return () => clearInterval(interval);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [widgets]);
 
   const handleDeviceChange = async (deviceId: string) => {
     setFormData({ ...formData, deviceId, dataKey: '' });

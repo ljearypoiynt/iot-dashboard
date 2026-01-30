@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDevice } from '../context/DeviceContext';
 import { bluetoothService, DeviceProperty, DeviceInfo } from '../services/BluetoothService';
+import { apiService } from '../services/ApiService';
 import './DeviceProvisioning.css';
 
 const DeviceProvisioning: React.FC = () => {
@@ -12,52 +13,38 @@ const DeviceProvisioning: React.FC = () => {
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperty[]>([]);
   const [propertyValues, setPropertyValues] = useState<{ [key: string]: any }>({});
-  const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [isUpdatingProperties, setIsUpdatingProperties] = useState(false);
   const [propertyUpdateStatus, setPropertyUpdateStatus] = useState('');
 
-  // Fetch device info when device is connected
-  useEffect(() => {
-    const fetchDeviceInfo = async () => {
-      if (connectedDevice && !deviceInfo) {
-        setIsLoadingInfo(true);
-        try {
-          console.log('Fetching device info for:', connectedDevice.name);
-          const info = await getDeviceInfo();
-          console.log('Device info received:', info);
-          if (info) {
-            setDeviceInfo(info);
-            const properties = bluetoothService.parseDeviceProperties(info);
-            console.log('Parsed properties:', properties);
-            setDeviceProperties(properties);
-            
-            // Initialize property values from device
-            const initialValues: { [key: string]: any } = {};
-            properties.forEach(prop => {
-              initialValues[prop.name] = prop.value;
-            });
-            setPropertyValues(initialValues);
-          } else {
-            console.warn('No device info returned');
-          }
-        } catch (err) {
-          console.error('Failed to fetch device info:', err);
-          // Show error to user
-          setPropertyUpdateStatus(`Error loading device info: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        } finally {
-          setIsLoadingInfo(false);
-        }
-      }
-    };
-
-    fetchDeviceInfo();
-  }, [connectedDevice, deviceInfo, getDeviceInfo]);
+  // Removed useEffect - device info is now fetched immediately after connection in handleScanAndConnect
 
   const handleScanAndConnect = async () => {
     clearError();
     try {
       const device = await bluetoothService.scanForDevices();
       await connectToDevice(device);
+      
+      // Force immediate device info fetch after connection
+      setTimeout(async () => {
+        try {
+          console.log('Fetching device info after connection...');
+          const info = await getDeviceInfo();
+          if (info) {
+            setDeviceInfo(info);
+            const properties = bluetoothService.parseDeviceProperties(info);
+            setDeviceProperties(properties);
+            
+            // Initialize property values
+            const initialValues: { [key: string]: any } = {};
+            properties.forEach(prop => {
+              initialValues[prop.name] = prop.value;
+            });
+            setPropertyValues(initialValues);
+          }
+        } catch (err) {
+          console.error('Failed to fetch device info after connection:', err);
+        }
+      }, 1000);
     } catch (err) {
       console.error('Failed to scan and connect:', err);
     }
@@ -101,6 +88,32 @@ const DeviceProvisioning: React.FC = () => {
     setDeviceProperties([]);
     setPropertyValues({});
     setPropertyUpdateStatus('');
+  };
+
+  const handleDeleteDevice = async () => {
+    if (!deviceInfo) return;
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete device "${connectedDevice?.name}" (${deviceInfo.macAddress})? This will remove it from the backend database.`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      setPropertyUpdateStatus('Deleting device...');
+      
+      // Call backend API to delete device by MAC address
+      await apiService.deleteDevice(deviceInfo.macAddress);
+      
+      setPropertyUpdateStatus('Device deleted successfully!');
+      // Disconnect after successful delete
+      setTimeout(() => {
+        handleDisconnect();
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to delete device:', err);
+      setPropertyUpdateStatus(`Error deleting device: ${err instanceof Error ? err.message : 'Network error'}`);
+    }
   };
 
   const handlePropertyChange = (propertyName: string, value: any) => {
@@ -191,9 +204,16 @@ const DeviceProvisioning: React.FC = () => {
                 )}
               </div>
             </div>
-            <button onClick={handleDisconnect} className="btn btn-secondary">
-              Disconnect
-            </button>
+            <div className="device-actions">
+              <button onClick={handleDisconnect} className="btn btn-secondary">
+                Disconnect
+              </button>
+              {deviceInfo && (
+                <button onClick={handleDeleteDevice} className="btn btn-danger">
+                  Delete Device
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -201,9 +221,7 @@ const DeviceProvisioning: React.FC = () => {
       {connectedDevice && (
         <div className="properties-section">
           <h2>1. Device Configuration</h2>
-          {isLoadingInfo ? (
-            <div className="loading-message">Loading device information...</div>
-          ) : deviceInfo ? (
+          {deviceInfo ? (
             deviceProperties.length > 0 ? (
               <form onSubmit={handleUpdateProperties}>
                 {deviceProperties.map((prop) => (

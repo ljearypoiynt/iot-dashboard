@@ -236,6 +236,24 @@
   transform: translateY(-1px);
 }
 
+.btn-danger {
+  background-color: #991b1b;
+  color: white;
+  border: 1px solid #7f1d1d;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #7f1d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(153, 27, 27, 0.4);
+}
+
+.device-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .status-message {
   margin-top: 20px;
   padding: 15px;
