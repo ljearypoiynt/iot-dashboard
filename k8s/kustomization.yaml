@@ -20,11 +20,11 @@ commonAnnotations:
 # Images (for updating image tags)
 images:
   - name: iot-dashboard-backend
-    newName: iot-dashboard-backend
-    newTag: latest
+    newName: ghcr.io/ljearypoiynt/iot-dashboard/backend
+    newTag: main
   - name: iot-dashboard-frontend
-    newName: iot-dashboard-frontend
-    newTag: latest
+    newName: ghcr.io/ljearypoiynt/iot-dashboard/frontend
+    newTag: main
 
 # Patches for different environments can be added here
 # patchesStrategicMerge:

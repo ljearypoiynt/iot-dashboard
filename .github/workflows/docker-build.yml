@@ -64,21 +64,12 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Get version
-        id: version
-        run: |
-          VERSION=$(cat IMAGE_VERSION.txt)
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
       - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
-          tags: |
-            ${{ steps.backend-meta.outputs.tags }}
-            iot-dashboard-backend:${{ steps.version.outputs.version }}
-            iot-dashboard-backend:latest
+          tags: ${{ steps.backend-meta.outputs.tags }}
           labels: ${{ steps.backend-meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -88,10 +79,7 @@ jobs:
         with:
           context: ./frontend
           push: true
-          tags: |
-            ${{ steps.frontend-meta.outputs.tags }}
-            iot-dashboard-frontend:${{ steps.version.outputs.version }}
-            iot-dashboard-frontend:latest
+          tags: ${{ steps.frontend-meta.outputs.tags }}
           labels: ${{ steps.frontend-meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

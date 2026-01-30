@@ -22,6 +22,8 @@ patchesStrategicMerge:
 # Override image tags for prod
 images:
   - name: iot-dashboard-backend
+    newName: ghcr.io/ljearypoiynt/iot-dashboard/backend
     newTag: v1.0.3  # Use semantic versioning in production
   - name: iot-dashboard-frontend
+    newName: ghcr.io/ljearypoiynt/iot-dashboard/frontend
     newTag: v1.0.3
