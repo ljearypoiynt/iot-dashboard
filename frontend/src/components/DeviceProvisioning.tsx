@@ -5,7 +5,7 @@ import { apiService } from '../services/ApiService';
 import './DeviceProvisioning.css';
 
 const DeviceProvisioning: React.FC = () => {
-  const { connectedDevice, isScanning, error, connectToDevice, provisionWiFi, disconnect, clearError, getDeviceInfo, updateDeviceProperties } = useDevice();
+  const { connectedDevice, isScanning, error, scanForDevices, connectToDevice, provisionWiFi, disconnect, clearError, getDeviceInfo, updateDeviceProperties } = useDevice();
   const [ssid, setSsid] = useState('');
   const [password, setPassword] = useState('');
   const [provisioningStatus, setProvisioningStatus] = useState('');
@@ -57,7 +57,8 @@ const DeviceProvisioning: React.FC = () => {
   const handleScanAndConnect = async () => {
     clearError();
     try {
-      const device = await bluetoothService.scanForDevices();
+      const device = await scanForDevices();
+      if (!device) return;
       await connectToDevice(device);
     } catch (err) {
       console.error('Failed to scan and connect:', err);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ESP32Device } from '../services/BluetoothService';
 import { BluetoothIcon, ConnectIcon, SignalIcon } from './Icons';
 import './Scanner.css';
 
@@ -7,6 +8,7 @@ export interface BluetoothDevice {
   name: string;
   signal: number; // Signal strength in dBm
   uuid: string;
+  raw?: ESP32Device;
 }
 
 interface BluetoothScannerProps {
@@ -88,7 +90,7 @@ const BluetoothScanner: React.FC<BluetoothScannerProps> = ({
                 <div className="device-info">
                   <div className="device-main">
                     <h4 className="device-name">{device.name}</h4>
-                    <p className="device-uuid">{device.uuid}</p>
+                    <p className="device-uuid">{device.uuid || 'Service UUID unavailable'}</p>
                   </div>
                 </div>
 

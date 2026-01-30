@@ -5,7 +5,7 @@ interface DeviceContextType {
   connectedDevice: ESP32Device | null;
   isScanning: boolean;
   error: string | null;
-  scanForDevices: () => Promise<void>;
+  scanForDevices: () => Promise<ESP32Device | null>;
   connectToDevice: (device: ESP32Device) => Promise<void>;
   provisionWiFi: (credentials: WiFiCredentials) => Promise<void>;
   disconnect: () => Promise<void>;
@@ -21,15 +21,17 @@ export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const scanForDevices = useCallback(async () => {
+  const scanForDevices = useCallback(async (): Promise<ESP32Device | null> => {
     setIsScanning(true);
     setError(null);
     try {
       const device = await bluetoothService.scanForDevices();
       // Note: This returns the selected device, but doesn't auto-connect
       console.log('Device selected:', device.name);
+      return device;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to scan for devices');
+      return null;
     } finally {
       setIsScanning(false);
     }

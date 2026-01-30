@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDevice } from '../context/DeviceContext';
-import { bluetoothService, DeviceProperty, DeviceInfo } from '../services/BluetoothService';
+import { bluetoothService, DeviceProperty, DeviceInfo, ESP32Device } from '../services/BluetoothService';
 import { apiService } from '../services/ApiService';
 import PageHeader from './PageHeader';
 import DevicesTable, { IoTDevice } from './DevicesTable';
-import BluetoothScanner from './BluetoothScanner';
+import BluetoothScanner, { BluetoothDevice } from './BluetoothScanner';
 import { ConnectionStatus } from './StatusIndicator';
 import { PlusIcon, RefreshIcon } from './Icons';
 import './DeviceProvisioning.css';
@@ -14,10 +14,11 @@ interface ScannerDevice {
   name: string;
   signal: number;
   uuid: string;
+  raw: ESP32Device;
 }
 
 const DeviceManagement: React.FC = () => {
-  const { connectedDevice, isScanning, error, connectToDevice, provisionWiFi, disconnect, clearError, getDeviceInfo, updateDeviceProperties } = useDevice();
+  const { connectedDevice, isScanning, error, scanForDevices, connectToDevice, provisionWiFi, disconnect, clearError, getDeviceInfo, updateDeviceProperties } = useDevice();
   
   const [allDevices, setAllDevices] = useState<IoTDevice[]>([]);
   const [scannerDevices, setScannerDevices] = useState<ScannerDevice[]>([]);
@@ -30,6 +31,7 @@ const DeviceManagement: React.FC = () => {
   const [propertyValues, setPropertyValues] = useState<{ [key: string]: any }>({});
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [propertyUpdateStatus, setPropertyUpdateStatus] = useState('');
+  const [isUpdatingProperties, setIsUpdatingProperties] = useState(false);
   
   const [ssid, setSsid] = useState('');
   const [password, setPassword] = useState('');
@@ -43,6 +45,14 @@ const DeviceManagement: React.FC = () => {
   const [selectedCloudNodeId, setSelectedCloudNodeId] = useState('');
   const [assignmentStatus, setAssignmentStatus] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
+
+  const mapToScannerDevice = (device: ESP32Device): ScannerDevice => ({
+    id: device.id,
+    name: device.name,
+    signal: -60,
+    uuid: '0000ff00-0000-1000-8000-00805f9b34fb',
+    raw: device
+  });
 
   useEffect(() => {
     loadDevices();
@@ -123,22 +133,20 @@ const DeviceManagement: React.FC = () => {
   const handleScan = async () => {
     clearError();
     try {
-      const device = await bluetoothService.scanForDevices();
+      const device = await scanForDevices();
+      if (!device) return;
+      setScannerDevices([mapToScannerDevice(device)]);
       await connectToDevice(device);
     } catch (err) {
       console.error('Failed to scan:', err);
     }
   };
 
-  const handleBluetoothConnect = async (device: ScannerDevice) => {
+  const handleBluetoothConnect = async (device: BluetoothDevice) => {
     try {
       clearError();
-      const btDevice = {
-        id: device.id,
-        name: device.name,
-        uuids: [device.uuid]
-      } as any;
-      await connectToDevice(btDevice);
+      if (!device.raw) return;
+      await connectToDevice(device.raw);
     } catch (err) {
       console.error('Failed to connect:', err);
     }
@@ -153,6 +161,7 @@ const DeviceManagement: React.FC = () => {
     setDeviceProperties([]);
     setPropertyValues({});
     setPropertyUpdateStatus('');
+    setScannerDevices([]);
   };
 
   const handleProvision = async (e: React.FormEvent) => {
@@ -191,6 +200,41 @@ const DeviceManagement: React.FC = () => {
       setProvisioningStatus('Failed to provision WiFi');
     } finally {
       setIsProvisioning(false);
+    }
+  };
+
+  const handlePropertyChange = (propertyName: string, value: any) => {
+    setPropertyValues(prev => ({
+      ...prev,
+      [propertyName]: value
+    }));
+  };
+
+  const handleUpdateProperties = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProperties(true);
+    setPropertyUpdateStatus('Updating device properties...');
+
+    try {
+      const status = await updateDeviceProperties(propertyValues);
+      setPropertyUpdateStatus(`Properties updated successfully! Status: ${status}`);
+
+      setTimeout(async () => {
+        try {
+          const info = await getDeviceInfo();
+          if (info) {
+            setDeviceInfo(info);
+            const properties = bluetoothService.parseDeviceProperties(info);
+            setDeviceProperties(properties);
+          }
+        } catch (err) {
+          console.error('Failed to refresh device info:', err);
+        }
+      }, 1000);
+    } catch (err) {
+      setPropertyUpdateStatus('Failed to update properties');
+    } finally {
+      setIsUpdatingProperties(false);
     }
   };
 
@@ -339,6 +383,16 @@ const DeviceManagement: React.FC = () => {
               <div className="status-message">{propertyUpdateStatus}</div>
             )}
 
+            {deviceInfo && (
+              <div className="info-message" style={{ marginBottom: '16px' }}>
+                <p><strong>MAC:</strong> {deviceInfo.macAddress}</p>
+                <p><strong>Type:</strong> {deviceInfo.deviceType}</p>
+                {deviceInfo.wifiConnected && (
+                  <p><strong>WiFi:</strong> Connected to {deviceInfo.wifiSSID}</p>
+                )}
+              </div>
+            )}
+
             <form onSubmit={handleProvision}>
               <h4>WiFi Provisioning</h4>
               <input
@@ -358,6 +412,54 @@ const DeviceManagement: React.FC = () => {
               </button>
               {provisioningStatus && <p>{provisioningStatus}</p>}
             </form>
+
+            <div className="properties-section" style={{ marginTop: '20px' }}>
+              <h4>Device Configuration</h4>
+              {deviceInfo ? (
+                deviceProperties.length > 0 ? (
+                  <form onSubmit={handleUpdateProperties}>
+                    {deviceProperties.map((prop) => (
+                      <div key={prop.name} className="form-group">
+                        <label htmlFor={prop.name}>
+                          {prop.label}
+                          {prop.unit && <span className="unit"> ({prop.unit})</span>}:
+                        </label>
+                        {prop.type === 'number' ? (
+                          <input
+                            id={prop.name}
+                            type="number"
+                            step="any"
+                            value={propertyValues[prop.name] ?? ''}
+                            onChange={(e) => handlePropertyChange(prop.name, parseFloat(e.target.value))}
+                            required
+                          />
+                        ) : (
+                          <input
+                            id={prop.name}
+                            type="text"
+                            value={propertyValues[prop.name] ?? ''}
+                            onChange={(e) => handlePropertyChange(prop.name, e.target.value)}
+                            required
+                          />
+                        )}
+                      </div>
+                    ))}
+
+                    <button type="submit" disabled={isUpdatingProperties}>
+                      {isUpdatingProperties ? 'Updating...' : 'Update Properties'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="info-message">
+                    <p>This device doesn't have configurable properties, or properties couldn't be loaded.</p>
+                  </div>
+                )
+              ) : (
+                <div className="info-message">
+                  <p>Waiting for device to send configuration information...</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
