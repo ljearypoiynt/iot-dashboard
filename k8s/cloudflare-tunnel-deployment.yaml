@@ -26,6 +26,8 @@ spec:
           - /etc/cloudflared/config/config.yaml
           - --origincert
           - /etc/cloudflared/creds/cert.pem
+          - --loglevel
+          - debug
           - run
         ports:
         - containerPort: 7844
