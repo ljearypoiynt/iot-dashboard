@@ -471,7 +471,7 @@ that only the intended `SealedSecret` is uploaded to the cluster. The
 only change from existing Kubernetes is that the *contents* of the
 `Secret` are now hidden while outside the cluster.
 
-### Managing existing secrets
+### Managing existing secrets 
 
 If you want the Sealed Secrets controller to manage an existing `Secret`, you can annotate your `Secret` with the `sealedsecrets.bitnami.com/managed: "true"` annotation. The existing `Secret` will be overwritten when unsealing a `SealedSecret` with the same name and namespace, and the `SealedSecret` will take ownership of the `Secret` (so that when the `SealedSecret` is deleted the `Secret` will also be deleted).
 
