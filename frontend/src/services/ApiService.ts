@@ -166,6 +166,30 @@ class ApiService {
   }
 
   /**
+   * Update device type (e.g., change from SensorNode to CloudNode)
+   */
+  async updateDeviceType(id: string, deviceType: string): Promise<IoTDevice> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/devices/${id}/type`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deviceType })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to update device type:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Delete a device
    */
   async deleteDevice(id: string): Promise<void> {
