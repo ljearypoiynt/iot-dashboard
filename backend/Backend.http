@@ -14,7 +14,7 @@ Content-Type: application/json
 GET {{Backend_HostAddress}}/api/devices
 Accept: application/json
 
-### Get device by ID (replace with actual ID)
+### Get device by ID (replace with actual ID) 
 GET {{Backend_HostAddress}}/api/devices/YOUR_DEVICE_ID_HERE
 Accept: application/json
 
