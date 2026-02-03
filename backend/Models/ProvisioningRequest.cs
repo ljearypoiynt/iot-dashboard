@@ -20,3 +20,8 @@ public class AssignSensorRequest
     public string SensorId { get; set; } = string.Empty;
     public string CloudNodeId { get; set; } = string.Empty;
 }
+
+public class UpdateDeviceTypeRequest
+{
+    public string DeviceType { get; set; } = string.Empty;
+}

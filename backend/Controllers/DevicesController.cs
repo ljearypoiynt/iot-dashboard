@@ -102,6 +102,33 @@ public class DevicesController : ControllerBase
     }
 
     /// <summary>
+    /// Update device type (e.g., change from SensorNode to CloudNode)
+    /// </summary>
+    [HttpPut("{id}/type")]
+    public async Task<ActionResult<IoTDevice>> UpdateDeviceType(
+        string id, 
+        [FromBody] UpdateDeviceTypeRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Updating device {DeviceId} type to {NewType}", id, request.DeviceType);
+            
+            var device = await _deviceService.UpdateDeviceTypeAsync(id, request.DeviceType);
+            if (device == null)
+            {
+                return NotFound(new { message = "Device not found" });
+            }
+            
+            return Ok(device);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update device type");
+            return BadRequest(new { message = $"Failed to update device type: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
     /// Assign a sensor to a cloud node
     /// </summary>
     [HttpPost("assign-sensor")]

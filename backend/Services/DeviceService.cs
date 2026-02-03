@@ -19,6 +19,7 @@ public interface IDeviceService
     Task<bool> UpdateDeviceStatusAsync(string id, DeviceStatus status);
     Task<bool> DeleteDeviceAsync(string id);
     Task<IoTDevice?> UpdateDeviceMetadataAsync(string id, Dictionary<string, string> metadata);
+    Task<IoTDevice?> UpdateDeviceTypeAsync(string id, string deviceType);
     Task<AssignSensorResult> AssignSensorToCloudNodeAsync(string sensorId, string cloudNodeId);
     Task<IEnumerable<IoTDevice>> GetDevicesByTypeAsync(string deviceType);
     Task<IEnumerable<IoTDevice>> GetSensorsForCloudNodeAsync(string cloudNodeId);
@@ -98,6 +99,52 @@ public class DeviceService : IDeviceService
         }
         device.LastSeen = DateTime.UtcNow;
         
+        await _context.SaveChangesAsync();
+        return device;
+    }
+
+    public async Task<IoTDevice?> UpdateDeviceTypeAsync(string id, string deviceType)
+    {
+        var device = await _context.Devices.FindAsync(id);
+        if (device == null)
+            return null;
+
+        var oldType = device.DeviceType;
+        device.DeviceType = deviceType;
+        device.LastSeen = DateTime.UtcNow;
+
+        // If changing from SensorNode to CloudNode, clear cloud node assignment
+        if (oldType == "SensorNode" && deviceType == "CloudNode")
+        {
+            device.CloudNodeId = null;
+            // Remove from old cloud node's assigned sensors list if applicable
+            if (!string.IsNullOrEmpty(device.CloudNodeId))
+            {
+                var oldCloudNode = await _context.Devices.FindAsync(device.CloudNodeId);
+                if (oldCloudNode != null && oldCloudNode.AssignedSensorIds.Contains(id))
+                {
+                    oldCloudNode.AssignedSensorIds.Remove(id);
+                }
+            }
+        }
+
+        // If changing from CloudNode to SensorNode, clear assigned sensors
+        if (oldType == "CloudNode" && deviceType == "SensorNode")
+        {
+            // Unassign all sensors that were assigned to this cloud node
+            var assignedSensors = await _context.Devices
+                .Where(d => d.CloudNodeId == id)
+                .ToListAsync();
+            
+            foreach (var sensor in assignedSensors)
+            {
+                sensor.CloudNodeId = null;
+                sensor.Metadata.Remove("cloudNodeMAC");
+            }
+            
+            device.AssignedSensorIds.Clear();
+        }
+
         await _context.SaveChangesAsync();
         return device;
     }
