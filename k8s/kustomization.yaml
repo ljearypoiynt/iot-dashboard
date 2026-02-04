@@ -25,10 +25,10 @@ commonAnnotations:
 images:
   - name: iot-dashboard-backend
     newName: ghcr.io/ljearypoiynt/iot-dashboard/backend
-    newTag: v1.0.3
+    newTag: main-4be8723
   - name: iot-dashboard-frontend
     newName: ghcr.io/ljearypoiynt/iot-dashboard/frontend
-    newTag: v1.0.3
+    newTag: main-4be8723
 
 # Patches for different environments can be added here
 # patchesStrategicMerge:
