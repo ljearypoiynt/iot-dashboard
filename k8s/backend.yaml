@@ -28,7 +28,7 @@ spec:
         - name: ASPNETCORE_URLS
           value: "http://+:5000"
         - name: ConnectionStrings__DefaultConnection
-          value: "Host=postgres-service;Port=5432;Database=iotdashboard;Username=iotuser;Password=iotpassword123"
+          value: "Host=postgres-service.shared-data.svc.cluster.local;Port=5432;Database=iotdashboard;Username=postgres;Password=postgrespassword123"
         resources:
           requests:
             memory: "256Mi"

@@ -1,10 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: iot-dashboard
-
 resources:
   - namespace.yaml
+  - postgres-shared.yaml
   - postgres.yaml
   - backend.yaml
   - frontend.yaml
@@ -13,8 +12,10 @@ resources:
   - cloudflare-tunnel-deployment.yaml
 
 # Common labels for all resources
-commonLabels:
-  app.kubernetes.io/managed-by: argocd
+labels:
+  - includeSelectors: true
+    pairs:
+      app.kubernetes.io/managed-by: argocd
 
 # Common annotations
 commonAnnotations:
@@ -24,10 +25,10 @@ commonAnnotations:
 images:
   - name: iot-dashboard-backend
     newName: ghcr.io/ljearypoiynt/iot-dashboard/backend
-    newTag: lastest
+    newTag: v1.0.3
   - name: iot-dashboard-frontend
     newName: ghcr.io/ljearypoiynt/iot-dashboard/frontend
-    newTag: latest
+    newTag: v1.0.3
 
 # Patches for different environments can be added here
 # patchesStrategicMerge:

@@ -4,7 +4,7 @@ metadata:
   name: iot-dashboard-project
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    - argoproj.io/resources-finalizer
 spec:
   description: IoT Dashboard Project
   
