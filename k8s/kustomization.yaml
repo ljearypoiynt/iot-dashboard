@@ -13,7 +13,7 @@ resources:
 
 # Common labels for all resources
 labels:
-  - includeSelectors: true
+  - includeSelectors: false
     pairs:
       app.kubernetes.io/managed-by: argocd
 

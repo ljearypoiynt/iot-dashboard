@@ -14,7 +14,7 @@ data:
         service: http://frontend-service.iot-dashboard.svc.cluster.local:80
 
       - hostname: music.poiynt.com
-        service: http://frontend-service.iot-dashboard.svc.cluster.local:80
+        service: http://frontend-service.musicnenaghneurofuse.svc.cluster.local:80
       
       - hostname: dashboardapi.poiynt.com
         service: http://backend-service.iot-dashboard.svc.cluster.local:5000
