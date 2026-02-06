@@ -15,6 +15,9 @@ data:
 
       - hostname: music.poiynt.com
         service: http://frontend-service.musicnenaghneurofuse.svc.cluster.local:80
+
+      - hostname: tennis.poiynt.com
+        service: http://tmr-client-service.tennismatchrecorder.svc.cluster.local:80
       
       - hostname: dashboardapi.poiynt.com
         service: http://backend-service.iot-dashboard.svc.cluster.local:5000
