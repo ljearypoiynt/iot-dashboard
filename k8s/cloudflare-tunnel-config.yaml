@@ -18,6 +18,9 @@ data:
 
       - hostname: tennis.poiynt.com
         service: http://tmr-client-service.tennismatchrecorder.svc.cluster.local:80
+
+      - hostname: tennisapi.poiynt.com
+        service: http://tmr-api-service.tennismatchrecorder.svc.cluster.local:80
       
       - hostname: dashboardapi.poiynt.com
         service: http://backend-service.iot-dashboard.svc.cluster.local:5000
