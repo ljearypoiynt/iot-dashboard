@@ -43,3 +43,7 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /spec/volumeName
